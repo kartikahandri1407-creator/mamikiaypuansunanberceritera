@@ -2,15 +2,15 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfigurasi Halaman - Diubah ke "centered" agar form terlihat lebih padat dan rapi
+# 1. Konfigurasi Halaman 
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS Aman & Manis
+# 2. CSS Manis & Obat Ampuh Anti-Tumpuk
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
     
-    /* Font Global & Warna Latar yang Lembut */
+    /* Font Global & Warna Latar */
     html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif; }
     .stApp { background-color: #fafaf9; }
     
@@ -31,6 +31,41 @@ st.markdown("""
         margin-top: 5px;
         margin-bottom: 40px;
         text-transform: uppercase;
+    }
+
+    /* --- OBAT AMPUH UNTUK FILE UPLOADER --- */
+    /* Menyembunyikan tulisan 'Drag and drop' dan 'Limit 200MB' yang bikin tumpuk */
+    [data-testid="stFileUploadDropzone"] > div > div > span,
+    [data-testid="stFileUploadDropzone"] > div > div > small {
+        display: none !important;
+    }
+    /* Merapikan kotaknya agar tombol Upload pas di tengah */
+    [data-testid="stFileUploadDropzone"] {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        border: 2px dashed #d6d3d1 !important;
+        border-radius: 12px !important;
+        background-color: #ffffff !important;
+        padding: 30px !important;
+        transition: all 0.3s ease;
+    }
+    [data-testid="stFileUploadDropzone"]:hover {
+        border-color: #1c1917 !important;
+        background-color: #f5f5f5 !important;
+    }
+
+    /* Input Form yang Empuk */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
+        border-radius: 8px !important;
+        border: 1px solid #e7e5e4 !important;
+        padding: 12px !important;
+        box-shadow: none !important;
+        background-color: #ffffff !important;
+    }
+    .stTextInput>div>div>input:focus, .stSelectbox>div>div>div:focus, .stTextArea>div>div>textarea:focus {
+        border-color: #d4af37 !important;
+        box-shadow: 0 0 0 1px #d4af37 !important;
     }
 
     /* Tombol Utama yang Elegan */
@@ -91,7 +126,7 @@ else:
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_allow_html=True)
 
-# 5. Form Input - Menggunakan layout vertical yang lebih rapi untuk mode Centered
+# 5. Form Input 
 st.markdown("### 📸 Visual Produk")
 uploaded_file = st.file_uploader("Unggah foto mahakarya (Opsional)", type=["jpg", "jpeg", "png"])
 
@@ -140,7 +175,6 @@ if generate:
                 st.markdown("### 🎞️ Hasil Racikan Mahakarya")
                 st.markdown(f"<div class='result-box'>{res.text}</div>", unsafe_allow_html=True)
                 
-                # Menggunakan layout kolom untuk menaruh tombol download di tengah
                 _, col_btn, _ = st.columns([1, 2, 1])
                 with col_btn:
                     st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt", use_container_width=True)
