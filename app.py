@@ -2,107 +2,80 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfigurasi Halaman - Royal & Boutique Experience
-st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="wide")
+# 1. Konfigurasi Halaman - Diubah ke "centered" agar form terlihat lebih padat dan rapi
+st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. Custom CSS: Estetika Maksimal & Perbaikan UI Streamlit
+# 2. CSS Aman & Manis
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
     
-    /* --- Font & Background Global --- */
+    /* Font Global & Warna Latar yang Lembut */
     html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .stApp { background: linear-gradient(135deg, #fafaf9 0%, #e7e5e4 100%); }
-
-    /* --- Card Utama --- */
-    .result-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(20px);
-        border-radius: 30px;
-        padding: 40px;
-        border: 1px solid rgba(212, 175, 55, 0.2);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
-        margin-bottom: 80px; /* Jarak ekstra agar tidak tertutup footer */
-    }
-
-    /* --- Tipografi Judul --- */
+    .stApp { background-color: #fafaf9; }
+    
+    /* Judul Estetik ala Butik */
     .main-title {
         font-family: 'Playfair Display', serif;
-        background: linear-gradient(90deg, #1c1917, #d4af37);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 700; text-align: center; font-size: 3.5rem !important;
-        padding-top: 20px;
+        color: #1c1917;
+        text-align: center; 
+        font-size: 2.8rem !important;
+        margin-bottom: 0px;
+        padding-bottom: 0px;
+    }
+    .subtitle {
+        text-align: center; 
+        color: #a8a29e; 
+        letter-spacing: 2px;
+        font-size: 0.85rem;
+        margin-top: 5px;
+        margin-bottom: 40px;
+        text-transform: uppercase;
     }
 
-    /* --- FIX: UI UPLOAD (Anti Bertumpuk) --- */
-    [data-testid="stFileUploadDropzone"] {
-        border: 2px dashed #d4af37 !important; /* Aksen emas */
-        border-radius: 16px !important;
-        background-color: rgba(255, 255, 255, 0.8) !important;
-        padding: 30px !important;
-        transition: all 0.3s ease !important;
-    }
-    [data-testid="stFileUploadDropzone"]:hover {
-        border-color: #1c1917 !important;
-        background-color: rgba(212, 175, 55, 0.1) !important;
-    }
-    /* Mematikan teks limit file yang sering menyebabkan glitch UI */
-    [data-testid="stFileUploadDropzone"] small {
-        display: none !important; 
-    }
-
-    /* --- FIX: UI FORM INPUT --- */
-    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
-        border-radius: 12px !important;
-        border: 1px solid #d6d3d1 !important;
-        background-color: #ffffff !important;
-        padding: 12px !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
-    }
-    .stTextInput>div>div>input:focus, .stSelectbox>div>div>div:focus, .stTextArea>div>div>textarea:focus {
-        border-color: #d4af37 !important;
-        box-shadow: 0 0 0 1px #d4af37 !important;
-    }
-
-    /* --- Tombol Utama --- */
+    /* Tombol Utama yang Elegan */
     .stButton>button {
-        background: #1c1917; 
-        color: #f5f5f4; 
-        border-radius: 12px; 
-        padding: 18px; 
+        background-color: #1c1917; 
+        color: #ffffff; 
+        border-radius: 8px; 
+        padding: 14px; 
         font-weight: 600; 
         width: 100%; 
-        border: none;
-        transition: all 0.3s ease !important;
+        border: 1px solid #1c1917;
+        transition: all 0.3s;
+        margin-top: 10px;
     }
     .stButton>button:hover { 
-        transform: scale(1.02); 
-        background: #d4af37; 
+        background-color: #ffffff; 
         color: #1c1917; 
+        border: 1px solid #d4af37;
+        transform: translateY(-2px);
     }
 
-    /* --- Menyembunyikan Elemen Bawaan Streamlit --- */
+    /* Menyembunyikan Header/Footer bawaan Streamlit */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* --- FIX: FOOTER BARU YANG SLEEK --- */
-    .mamiki-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: rgba(250, 250, 249, 0.85); /* Semi transparan */
-        backdrop-filter: blur(8px);
+    /* Footer @mamikiaypuansunan yang Bersih */
+    .footer-manis {
         text-align: center;
-        padding: 12px;
+        padding: 20px;
         font-size: 13px;
         font-weight: 600;
         color: #a8a29e;
-        letter-spacing: 2px;
-        border-top: 1px solid rgba(214, 211, 209, 0.5);
-        z-index: 999;
+        margin-top: 60px;
+        border-top: 1px solid #e7e5e4;
+        letter-spacing: 1px;
+    }
+    
+    /* Styling Card Hasil */
+    .result-box {
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 12px;
+        border: 1px solid #e7e5e4;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -114,42 +87,35 @@ if api_key:
 else:
     st.error("Sistem membutuhkan API Key untuk mulai menenun cerita.")
 
-# 4. Header Section
+# 4. Header
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color:#78716c; letter-spacing: 2px;'>BEYOND ADS: WE WEAVE LEGENDS</p><br>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_allow_html=True)
 
-# 5. Main Content Area
-with st.container():
-    st.markdown("<div class='result-card'>", unsafe_allow_html=True)
-    
-    # Membalik porsi kolom agar area isian lebih lega
-    col_input, col_img = st.columns([2, 1])
-    
-    with col_img:
-        st.markdown("##### 📸 Visual Produk")
-        uploaded_file = st.file_uploader("Unggah foto produk (Opsional)", type=["jpg", "jpeg", "png"])
-        if uploaded_file:
-            st.image(uploaded_file, caption="Produk Terdeteksi", use_container_width=True)
+# 5. Form Input - Menggunakan layout vertical yang lebih rapi untuk mode Centered
+st.markdown("### 📸 Visual Produk")
+uploaded_file = st.file_uploader("Unggah foto mahakarya (Opsional)", type=["jpg", "jpeg", "png"])
 
-    with col_input:
-        st.markdown("##### ✍️ Narasi Produk")
-        prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Tapis Pinang Mas")
-        
-        c1, c2 = st.columns(2)
-        with c1:
-            category = st.selectbox("Klasifikasi", ["Kriya & Warisan", "Kuliner Premium", "Fashion & Lifestyle", "Beauty & Aura", "Hospitality", "Agrowisata"])
-            duration = st.selectbox("Durasi", ["15 Detik", "30 Detik", "60 Detik"])
-        with c2:
-            format_video = st.selectbox("Format/Rasio", ["9:16 (Vertical)", "1:1 (Square)", "16:9 (Widescreen)"])
-            model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia", "Remaja"])
-            
-        details = st.text_area("Jiwa Produk & Pesan Utama", placeholder="Ceritakan rahasia atau nilai seni di balik produk ini...")
+if uploaded_file:
+    st.image(uploaded_file, caption="Visual Terdeteksi", use_container_width=True)
 
-    st.markdown("<br>", unsafe_allow_html=True) # Spacer sebelum tombol
-    generate = st.button("Mulai Tenun Cerita ✨")
-    st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("### ✍️ Narasi Produk")
 
-# 6. Logika Generator
+prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Tapis Pinang Mas")
+
+col1, col2 = st.columns(2)
+with col1:
+    category = st.selectbox("Klasifikasi", ["Kriya & Warisan", "Kuliner Premium", "Fashion & Lifestyle", "Beauty & Aura", "Hospitality", "Agrowisata"])
+    duration = st.selectbox("Durasi", ["15 Detik", "30 Detik", "60 Detik"])
+with col2:
+    format_video = st.selectbox("Format/Rasio", ["9:16 (Vertical)", "1:1 (Square)", "16:9 (Widescreen)"])
+    model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia", "Remaja"])
+
+details = st.text_area("Jiwa Produk & Pesan Utama", placeholder="Ceritakan rahasia atau nilai seni di balik produk ini...")
+
+generate = st.button("Mulai Tenun Cerita ✨")
+
+# 6. Logika Eksekusi
 if generate:
     if not prod_name or not details:
         st.warning("Cerita tak bisa dirangkai tanpa nama dan jiwa produk.")
@@ -170,10 +136,16 @@ if generate:
                 """
                 res = model.generate_content([master_prompt] + image_parts)
                 st.balloons()
-                st.markdown(f"<div class='result-card'>{res.text}</div>", unsafe_allow_html=True)
-                st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt")
+                
+                st.markdown("### 🎞️ Hasil Racikan Mahakarya")
+                st.markdown(f"<div class='result-box'>{res.text}</div>", unsafe_allow_html=True)
+                
+                # Menggunakan layout kolom untuk menaruh tombol download di tengah
+                _, col_btn, _ = st.columns([1, 2, 1])
+                with col_btn:
+                    st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt", use_container_width=True)
             except Exception as e:
                 st.error(f"Mesin pencerita butuh istirahat: {e}")
 
-# 7. Sticky Footer Baru
-st.markdown('<div class="mamiki-footer">@mamikiaypuansunan</div>', unsafe_allow_html=True)
+# 7. Footer Super Bersih
+st.markdown('<div class="footer-manis">@mamikiaypuansunan</div>', unsafe_allow_html=True)
