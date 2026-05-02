@@ -5,16 +5,14 @@ from PIL import Image
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS SANGAT AMAN (Tanpa merusak struktur bawaan komponen Streamlit)
+# 2. CSS ANTI-BOCOR BROWSER TAB
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
     
-    /* Font dan Warna Latar */
     html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif; }
     .stApp { background-color: #fafaf9; }
     
-    /* Judul Utama */
     .main-title {
         font-family: 'Playfair Display', serif;
         color: #1c1917;
@@ -32,7 +30,24 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    /* Modifikasi Tombol Utama Saja */
+    /* --- OBAT ANTI TULISAN TUMPUK (UPLOADPLOAD) DI TAB --- */
+    /* Membuat teks asli browser menjadi transparan */
+    [data-testid="stFileUploadDropzone"] input[type="file"] {
+        color: transparent !important;
+    }
+    /* Menyembunyikan tombol upload bawaan webkit (Safari/Chrome Mobile) */
+    [data-testid="stFileUploadDropzone"] input[type="file"]::-webkit-file-upload-button {
+        visibility: hidden;
+    }
+    [data-testid="stFileUploadDropzone"] input[type="file"]::file-selector-button {
+        display: none !important;
+    }
+    /* Melegakan area kotak upload */
+    [data-testid="stFileUploadDropzone"] {
+        padding: 30px !important;
+    }
+
+    /* Tombol Utama */
     .stButton>button {
         background-color: #1c1917; 
         color: #ffffff; 
@@ -49,12 +64,10 @@ st.markdown("""
         border: 1px solid #d4af37;
     }
 
-    /* Sembunyikan Header/Footer Bawaan */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Footer Kustom */
     .footer-manis {
         text-align: center;
         padding: 20px;
@@ -66,7 +79,6 @@ st.markdown("""
         letter-spacing: 1px;
     }
     
-    /* Box Hasil */
     .result-box {
         background-color: #ffffff;
         padding: 20px;
@@ -81,20 +93,20 @@ api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
 else:
-    st.info("💡 Jangan lupa masukkan API Key di pengaturan Streamlit Secrets ya.")
+    st.info("💡 Sistem membutuhkan API Key untuk mulai menenun cerita.")
 
 # 4. Header
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_allow_html=True)
 
-# 5. Form Input - Menggunakan elemen bawaan murni agar aman
+# 5. Form Input
 st.subheader("📸 Visual Produk")
 uploaded_file = st.file_uploader("Unggah foto mahakarya di sini (Opsional)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     st.image(uploaded_file, caption="Visual Terdeteksi", use_container_width=True)
 
-st.divider() # Garis pembatas bawaan Streamlit yang rapi
+st.divider()
 
 st.subheader("✍️ Narasi Produk")
 prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Tapis Pinang Mas")
