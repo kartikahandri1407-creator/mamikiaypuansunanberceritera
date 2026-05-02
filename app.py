@@ -5,7 +5,7 @@ from PIL import Image
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS ANTI-BOCOR BROWSER TAB
+# 2. CSS OBAT BIUS TOTAL ANTI-TUMPUK
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
@@ -30,24 +30,46 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    /* --- OBAT ANTI TULISAN TUMPUK (UPLOADPLOAD) DI TAB --- */
-    /* Membuat teks asli browser menjadi transparan */
-    [data-testid="stFileUploadDropzone"] input[type="file"] {
-        color: transparent !important;
-    }
-    /* Menyembunyikan tombol upload bawaan webkit (Safari/Chrome Mobile) */
-    [data-testid="stFileUploadDropzone"] input[type="file"]::-webkit-file-upload-button {
-        visibility: hidden;
-    }
-    [data-testid="stFileUploadDropzone"] input[type="file"]::file-selector-button {
+    /* --- JURUS PAMUNGKAS UPLOADER --- */
+    /* 1. Sembunyikan teks 'Drag and drop' & Limit ukuran file */
+    [data-testid="stFileUploadDropzone"] > div > div > span,
+    [data-testid="stFileUploadDropzone"] > div > div > small {
         display: none !important;
     }
-    /* Melegakan area kotak upload */
-    [data-testid="stFileUploadDropzone"] {
-        padding: 30px !important;
+    
+    /* 2. "Butakan" teks asli di tombol yang bikin tumpuk */
+    [data-testid="stFileUploadDropzone"] button {
+        color: transparent !important;
+        font-size: 0px !important; 
+        background-color: #ffffff !important;
+        border: 1px solid #d4af37 !important;
+        border-radius: 8px !important;
+        position: relative;
+        height: 42px !important; 
+        width: 180px !important; 
+        margin: 0 auto !important;
+        display: block !important;
     }
 
-    /* Tombol Utama */
+    /* 3. Suntikkan teks rapi buatan kita di tengah tombol */
+    [data-testid="stFileUploadDropzone"] button::after {
+        content: 'Pilih Mahakarya 📸';
+        font-size: 14px !important;
+        color: #1c1917 !important;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: 600;
+        visibility: visible !important;
+    }
+
+    /* Pastikan input aslinya benar-benar hilang wujudnya */
+    [data-testid="stFileUploadDropzone"] input[type="file"] {
+        opacity: 0 !important;
+    }
+
+    /* --- Tombol Generate --- */
     .stButton>button {
         background-color: #1c1917; 
         color: #ffffff; 
