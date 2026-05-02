@@ -75,15 +75,15 @@ st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_a
 
 # 5. Form Input
 st.markdown("### 📸 Visual Produk")
-uploaded_file = st.file_uploader("Unggah foto mahakarya (Opsional)", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Unggah foto produk asli (Referansi Label & Kemasan)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="Visual Terdeteksi", use_container_width=True)
+    st.image(uploaded_file, caption="Identitas Visual Asli Terdeteksi", use_container_width=True)
 
 st.divider()
 
 st.markdown("### ✍️ Narasi Produk")
-prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Tapis Pinang Mas")
+prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Keripik Pisang Sumber Rejeki")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -102,7 +102,7 @@ if generate:
     if not prod_name or not details:
         st.warning("Mohon lengkapi Nama Mahakarya dan Jiwa Produk.")
     else:
-        with st.spinner("📜 Mamiki sedang menenun simfoni visual dan audio..."):
+        with st.spinner("📜 Mamiki sedang membaca label dan mengunci identitas produk..."):
             try:
                 image_parts = []
                 if uploaded_file:
@@ -111,51 +111,43 @@ if generate:
 
                 model = genai.GenerativeModel('gemini-2.5-flash')
                 
-                # --- PROMPT MASTER: TOTAL SYNCHRONIZATION ---
+                # --- PROMPT VERSION: IDENTITY LOCK & TEXT PRESERVATION ---
                 master_prompt = f"""
-                Anda adalah Creative Director & Expert Prompt Engineer.
-                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk mahakarya: '{prod_name}'.
-                Kategori: {category}. Model: {model_type}. Deskripsi: {details}.
+                Anda adalah Creative Director & Ahli Fotografi Produk Komersial.
+                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk '{prod_name}'.
 
-                ATURAN SCENE (DURASI RENDER AI):
-                AI Video (Kling/Runway) bekerja dalam potongan 5 detik.
-                - 15 Detik = Tepat 3 Scene.
-                - 30 Detik = Tepat 6 Scene.
-                - 60 Detik = Tepat 12 Scene.
-                Setiap scene WAJIB berdurasi 5 detik.
+                ATURAN KHUSUS ANALISIS GAMBAR (BRANDING LOCK):
+                1. IDENTIFIKASI LABEL: Lihat gambar yang diunggah. Ada label kuning dengan teks dan logo (misal: Logo Halal, Nama Merek, No WA). 
+                2. REPLIKASI TEKS: Pada Prompt Gambar dan Video di Scene terakhir, Anda WAJIB mendeskripsikan label tersebut secara mendetail: "Yellow label with original branding text, cartoon mascot, and Halal logo as seen in the reference image."
+                3. ANTI-BLANK LABEL: Dilarang keras membiarkan label menjadi polos atau kosong. Kemasan harus tampil 1:1 dengan aslinya namun dengan pencahayaan sinematik.
 
-                ATURAN KONSISTENSI VISUAL (GAMBAR vs TEKS):
-                1. Jika ada gambar: Identifikasi merek, warna, dan bentuk kemasan dari gambar. Gunakan detail tersebut di seluruh scene.
-                2. Jika tidak ada gambar: Bangun visual 100% berdasarkan Nama Mahakarya: '{prod_name}'.
-                3. Pastikan Prompt Gambar (Midjourney) dan Prompt Video (Kling) mendeskripsikan subjek yang SAMA PERSIS agar konsisten.
-
-                ATURAN MODEL ({model_type}):
-                - Jika 'Tanpa Model': Fokus 100% pada sinematografi produk (macro, slow motion, lighting).
-                - Jika ada Model: Sertakan interaksi model dengan produk (memegang, menatap, menggunakan) sesuai kategori {category}.
+                STRUKTUR SCENE (Potongan 5 detik):
+                - Scene awal: Fokus ke tekstur isi produk (organik & sinematik).
+                - Scene akhir: Fokus ke kemasan utuh (Product Reveal) sesuai foto referensi.
 
                 FORMAT OUTPUT (WAJIB):
                 ---
                 🎬 SCENE [Nomor]: [Nama Scene] (5 detik)
 
                 👁️ DESKRIPSI VISUAL (Bahasa Indonesia):
-                [Detail komposisi, pencahayaan, dan peran model jika ada].
+                [Jelaskan visual secara puitis. Scene akhir wajib menyebutkan kemasan dengan branding yang utuh sesuai gambar].
 
                 📸 PROMPT GAMBAR (English - Midjourney Style):
-                [High-detail static prompt, focus on texture & lighting. NO TEXT IN IMAGE].
+                [Sertakan instruksi: "Exact replica of the yellow label from the reference image, including all text and logos, realistic lighting, macro texture"].
 
-                🎥 PROMPT VIDEO ALL-IN-ONE (English - Kling/Runway Style):
-                [Self-contained paragraph. Deskripsikan wujud produk secara utuh (warna, tekstur, merek) + pergerakan kamera 5 detik + pergerakan subjek. AI Video harus tahu apa yang digerakkan tanpa melihat prompt gambar].
+                🎥 PROMPT VIDEO ALL-IN-ONE (English - Kling Style):
+                [Deskripsikan pergerakan kamera 5 detik yang menyorot label dan kemasan asli secara perlahan (slow zoom/pan). Tegaskan bahwa teks pada label harus terlihat jelas dan tidak boleh dihilangkan].
 
                 🎙️ ELEMEN AUDIO & TEKS (Bahasa Indonesia):
                 - Voice Over (VO): "[Naskah puitis]"
-                - SFX & Musik: "[Suara taktil & instrumen]"
+                - SFX & Musik: "[Suara taktil & instrumen lokal]"
                 - On-Screen Text: "[Teks estetik]"
                 ---
                 """
                 res = model.generate_content([master_prompt] + image_parts)
                 st.balloons()
                 
-                st.markdown("### 🎞️ Hasil Racikan Mahakarya")
+                st.markdown("### 🎞️ Hasil Racikan Mahakarya (Identity Locked)")
                 st.info(res.text) 
                 
                 st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt", use_container_width=True)
