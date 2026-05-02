@@ -2,17 +2,20 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfigurasi Halaman
+# 1. Konfigurasi Halaman (Paling Aman)
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS - JURUS PAMUNGKAS UPLOADER V2 (TOTAL ANNIHILATION)
+# 2. CSS TOBAT NASUHA (Hanya sentuh Font, Judul, dan Footer)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
     
-    html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .stApp { background-color: #fafaf9; }
+    /* Ganti Font Global */
+    html, body, [class*="st-"] { 
+        font-family: 'Plus Jakarta Sans', sans-serif; 
+    }
     
+    /* Judul Utama */
     .main-title {
         font-family: 'Playfair Display', serif;
         color: #1c1917;
@@ -30,93 +33,12 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    /* --- JURUS PAMUNGKAS UPLOADER V2 - TOTAL ANNIHILATION --- */
-    
-    /* 1. Sembunyikan LABEL uploader */
-    [data-testid="stFileUploader"] label {
-        display: none !important;
-    }
-    
-    /* 2. Sembunyikan SEMUA teks default di dropzone */
-    [data-testid="stFileUploadDropzone"] > div > div > span,
-    [data-testid="stFileUploadDropzone"] > div > div > small,
-    [data-testid="stFileUploadDropzone"] div[style*="text-align: center"] {
-        display: none !important;
-    }
-    
-    /* 3. Custom tombol cantik */
-    [data-testid="stFileUploadDropzone"] button {
-        color: transparent !important;
-        font-size: 0px !important; 
-        background: linear-gradient(135deg, #ffffff 0%, #f8f5f2 100%) !important;
-        border: 2px solid #d4af37 !important;
-        border-radius: 12px !important;
-        position: relative !important;
-        height: 48px !important; 
-        width: 220px !important; 
-        margin: 0 auto !important;
-        display: block !important;
-        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
-        transition: all 0.3s ease;
-    }
-    [data-testid="stFileUploadDropzone"] button:hover {
-        border-color: #b8942f !important;
-        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
-        transform: translateY(-2px);
-    }
-    
-    /* 4. Teks custom yang elegan */
-    [data-testid="stFileUploadDropzone"] button::after {
-        content: '📸 Pilih Mahakarya';
-        font-size: 14px !important;
-        color: #1c1917 !important;
-        position: absolute !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.5px;
-    }
-    
-    /* 5. Hilangkan input file asli */
-    [data-testid="stFileUploadDropzone"] input[type="file"] {
-        opacity: 0 !important;
-        width: 0 !important;
-        height: 0 !important;
-    }
-
-    /* --- Form Input styling --- */
-    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
-        border-radius: 8px !important;
-        border: 1px solid #e7e5e4 !important;
-        padding: 12px !important;
-    }
-    .stTextInput>div>div>input:focus, .stSelectbox>div>div>div:focus, .stTextArea>div>div>textarea:focus {
-        border-color: #d4af37 !important;
-        box-shadow: 0 0 0 1px #d4af37 !important;
-    }
-
-    /* --- Tombol Generate --- */
-    .stButton>button {
-        background-color: #1c1917; 
-        color: #ffffff; 
-        border-radius: 8px; 
-        font-weight: 600; 
-        width: 100%; 
-        border: 1px solid #1c1917;
-        padding: 12px;
-        margin-top: 15px;
-    }
-    .stButton>button:hover { 
-        background-color: #ffffff; 
-        color: #1c1917; 
-        border: 1px solid #d4af37;
-    }
-
+    /* Sembunyikan bawaan Streamlit */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
+    /* Footer Custom */
     .footer-manis {
         text-align: center;
         padding: 20px;
@@ -126,13 +48,6 @@ st.markdown("""
         margin-top: 50px;
         border-top: 1px solid #e7e5e4;
         letter-spacing: 1px;
-    }
-    
-    .result-box {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #e7e5e4;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -148,17 +63,16 @@ else:
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_allow_html=True)
 
-# 5. Form Input
-st.subheader("📸 Visual Produk")
-# Mengosongkan string label pertama agar tidak muncul judul bawaan Streamlit
-uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"], help="Unggah foto mahakarya (Opsional)")
+# 5. Form Input - Dibiarkan murni bawaan Streamlit agar tidak error
+st.markdown("### 📸 Visual Produk")
+uploaded_file = st.file_uploader("Unggah foto mahakarya (Opsional)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     st.image(uploaded_file, caption="Visual Terdeteksi", use_container_width=True)
 
 st.divider()
 
-st.subheader("✍️ Narasi Produk")
+st.markdown("### ✍️ Narasi Produk")
 prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Tapis Pinang Mas")
 
 col1, col2 = st.columns(2)
@@ -171,7 +85,8 @@ with col2:
 
 details = st.text_area("Jiwa Produk & Pesan Utama", placeholder="Ceritakan rahasia atau nilai seni di balik produk ini...")
 
-generate = st.button("Mulai Tenun Cerita ✨")
+# Tombol murni bawaan Streamlit
+generate = st.button("Mulai Tenun Cerita ✨", use_container_width=True)
 
 # 6. Logika Eksekusi
 if generate:
@@ -195,8 +110,8 @@ if generate:
                 res = model.generate_content([master_prompt] + image_parts)
                 st.balloons()
                 
-                st.subheader("🎞️ Hasil Racikan Mahakarya")
-                st.markdown(f"<div class='result-box'>{res.text}</div>", unsafe_allow_html=True)
+                st.markdown("### 🎞️ Hasil Racikan Mahakarya")
+                st.info(res.text) # Menggunakan info box bawaan
                 
                 st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt", use_container_width=True)
             except Exception as e:
