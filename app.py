@@ -2,19 +2,21 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfigurasi Halaman
+# 1. Konfigurasi Halaman (Layout Paling Aman)
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS UTAMA (Bersih dari CSS Uploader yang bikin kacau)
+# 2. CSS TOBAT NASUHA (Hanya mempercantik yang aman)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
     
+    /* Ganti Font Global */
     html, body, [class*="st-"] { 
         font-family: 'Plus Jakarta Sans', sans-serif; 
     }
+    .stApp { background-color: #fafaf9; }
     
-    /* Judul Utama */
+    /* Judul Utama ala Butik */
     .main-title {
         font-family: 'Playfair Display', serif;
         color: #1c1917;
@@ -28,11 +30,11 @@ st.markdown("""
         color: #a8a29e; 
         letter-spacing: 2px;
         font-size: 0.85rem;
-        margin-bottom: 30px;
+        margin-bottom: 40px;
         text-transform: uppercase;
     }
 
-    /* Tombol Hitam Elegan Bawah */
+    /* Modifikasi Tombol "Mulai Tenun Cerita" menjadi Hitam Eksklusif */
     .stButton > button {
         background-color: #1c1917 !important; 
         color: #ffffff !important; 
@@ -40,7 +42,7 @@ st.markdown("""
         font-weight: 600 !important; 
         border: 1px solid #1c1917 !important;
         padding: 12px !important;
-        margin-top: 10px !important;
+        margin-top: 20px !important;
     }
     .stButton > button:hover { 
         background-color: #ffffff !important; 
@@ -48,12 +50,12 @@ st.markdown("""
         border: 1px solid #d4af37 !important;
     }
 
-    /* Sembunyikan bawaan Streamlit */
+    /* Sembunyikan bawaan Streamlit yang mengganggu */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Footer Custom */
+    /* Footer @mamikiaypuansunan */
     .footer-manis {
         text-align: center;
         padding: 20px;
@@ -78,74 +80,24 @@ else:
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_allow_html=True)
 
-# 5. Form Input - SOLUSI PAMUNGKAS UPLOADER 🔥
+# 5. Form Input (Murni Bawaan Streamlit)
 st.markdown("### 📸 Visual Produk")
-
-# Buat container khusus
-uploader_container = st.container()
-with uploader_container:
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        # File uploader TANPA LABEL + PLACEHOLDER CUSTOM
-        uploaded_file = st.file_uploader(
-            label="",
-            type=["jpg", "jpeg", "png"],
-            help="📸 Unggah foto mahakarya (Max 5MB)"
-        )
-        
-        # Custom CSS INJECTOR - HANYA untuk container ini
-        st.markdown("""
-        <style>
-        /* TARGET SPESIFIK - hanya uploader di container ini */
-        div[data-testid="stFileUploader"] > label {
-            display: none !important;
-        }
-        div[data-testid="stFileUploadDropzone"] > div > div > span,
-        div[data-testid="stFileUploadDropzone"] > div > div > small {
-            display: none !important;
-        }
-        div[data-testid="stFileUploadDropzone"] button {
-            background: linear-gradient(135deg, #fffdf9 0%, #f8f5f2 100%) !important;
-            border: 2px solid #d4af37 !important;
-            border-radius: 12px !important;
-            height: 50px !important;
-            width: 240px !important;
-            margin: 0 auto !important;
-            color: transparent !important;
-            font-size: 0 !important;
-            box-shadow: 0 4px 15px rgba(212,175,55,0.2);
-        }
-        div[data-testid="stFileUploadDropzone"] button::after {
-            content: '✨ Pilih Mahakarya Anda' !important;
-            position: absolute !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            color: #1c1917 !important;
-            font-weight: 600 !important;
-            font-size: 14px !important;
-            font-family: 'Plus Jakarta Sans', sans-serif !important;
-        }
-        div[data-testid="stFileUploadDropzone"] button:hover {
-            border-color: #b8942f !important;
-            box-shadow: 0 6px 20px rgba(212,175,55,0.3) !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+# Kita kembalikan uploader ke versi standar tanpa embel-embel
+uploaded_file = st.file_uploader("Unggah foto mahakarya (Opsional)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="✅ Visual Terdeteksi", use_container_width=True)
+    st.image(uploaded_file, caption="Visual Terdeteksi", use_container_width=True)
 
 st.divider()
 
 st.markdown("### ✍️ Narasi Produk")
 prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Tapis Pinang Mas")
 
-col_a, col_b = st.columns(2)
-with col_a:
+col1, col2 = st.columns(2)
+with col1:
     category = st.selectbox("Klasifikasi", ["Kriya & Warisan", "Kuliner Premium", "Fashion & Lifestyle", "Beauty & Aura", "Hospitality", "Agrowisata"])
     duration = st.selectbox("Durasi", ["15 Detik", "30 Detik", "60 Detik"])
-with col_b:
+with col2:
     format_video = st.selectbox("Format/Rasio", ["9:16 (Vertical)", "1:1 (Square)", "16:9 (Widescreen)"])
     model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia", "Remaja"])
 
