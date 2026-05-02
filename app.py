@@ -10,9 +10,7 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
     
-    html, body, [class*="st-"] { 
-        font-family: 'Plus Jakarta Sans', sans-serif; 
-    }
+    html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif; }
     .stApp { background-color: #fafaf9; }
     
     .main-title {
@@ -69,7 +67,7 @@ api_key = st.secrets.get("GEMINI_API_KEY")
 if api_key:
     genai.configure(api_key=api_key)
 else:
-    st.info("💡 Sistem membutuhkan API Key untuk mulai menenun cerita.")
+    st.info("💡 Masukkan API Key di Secrets Streamlit Cloud.")
 
 # 4. Header
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
@@ -102,7 +100,7 @@ generate = st.button("Mulai Tenun Cerita ✨", use_container_width=True)
 # 6. Logika Eksekusi
 if generate:
     if not prod_name or not details:
-        st.warning("Mohon lengkapi Nama Mahakarya dan Jiwa Produk terlebih dahulu.")
+        st.warning("Mohon lengkapi Nama Mahakarya dan Jiwa Produk.")
     else:
         with st.spinner("📜 Mamiki sedang menenun simfoni visual dan audio..."):
             try:
@@ -113,32 +111,45 @@ if generate:
 
                 model = genai.GenerativeModel('gemini-2.5-flash')
                 
-                # --- PROMPT FINAL: STRUKTUR LENGKAP + ESTETIKA NUSANTARA ---
+                # --- PROMPT MASTER: TOTAL SYNCHRONIZATION ---
                 master_prompt = f"""
-                Anda adalah Creative Director kelas dunia dan Ahli AI Prompt Engineering yang memahami kekayaan visual budaya.
-                Buatlah storyboard iklan sinematik {duration} rasio {format_video} untuk mahakarya '{prod_name}'.
+                Anda adalah Creative Director & Expert Prompt Engineer.
+                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk mahakarya: '{prod_name}'.
                 Kategori: {category}. Model: {model_type}. Deskripsi: {details}.
 
-                INSTRUKSI PENTING: Berikan sentuhan kehangatan tropis, tekstur organik, atau elemen kearifan lokal yang dikemas secara super eksklusif dan mewah. Hindari gaya visual yang terlalu Skandinavia/Eropa dingin.
+                ATURAN SCENE (DURASI RENDER AI):
+                AI Video (Kling/Runway) bekerja dalam potongan 5 detik.
+                - 15 Detik = Tepat 3 Scene.
+                - 30 Detik = Tepat 6 Scene.
+                - 60 Detik = Tepat 12 Scene.
+                Setiap scene WAJIB berdurasi 5 detik.
 
-                UBAH TOTAL FORMAT OUTPUT ANDA. Langsung berikan output per Scene dengan struktur WAJIB berikut ini secara berurutan:
+                ATURAN KONSISTENSI VISUAL (GAMBAR vs TEKS):
+                1. Jika ada gambar: Identifikasi merek, warna, dan bentuk kemasan dari gambar. Gunakan detail tersebut di seluruh scene.
+                2. Jika tidak ada gambar: Bangun visual 100% berdasarkan Nama Mahakarya: '{prod_name}'.
+                3. Pastikan Prompt Gambar (Midjourney) dan Prompt Video (Kling) mendeskripsikan subjek yang SAMA PERSIS agar konsisten.
 
+                ATURAN MODEL ({model_type}):
+                - Jika 'Tanpa Model': Fokus 100% pada sinematografi produk (macro, slow motion, lighting).
+                - Jika ada Model: Sertakan interaksi model dengan produk (memegang, menatap, menggunakan) sesuai kategori {category}.
+
+                FORMAT OUTPUT (WAJIB):
                 ---
-                🎬 SCENE [Nomor]: [Nama Scene] ([Durasi detik])
+                🎬 SCENE [Nomor]: [Nama Scene] (5 detik)
 
                 👁️ DESKRIPSI VISUAL (Bahasa Indonesia):
-                [Jelaskan detail apa yang terlihat di layar. Jelaskan komposisi, negative space, pencahayaan, objek utama, dan suasana visual secara menyeluruh menggunakan bahasa yang mudah dipahami klien].
+                [Detail komposisi, pencahayaan, dan peran model jika ada].
 
-                📸 PROMPT GAMBAR (English - Siap Copy ke Midjourney/DALL-E):
-                [Tulis prompt visual statis yang SANGAT DETAIL. Tentukan: Subject placement, extreme detail texture, camera angle, lens type, lighting setup (e.g., warm cinematic lighting), color grading, dan negative space. DILARANG memasukkan perintah teks/tulisan di dalam prompt ini].
+                📸 PROMPT GAMBAR (English - Midjourney Style):
+                [High-detail static prompt, focus on texture & lighting. NO TEXT IN IMAGE].
 
-                🎥 PROMPT VIDEO ALL-IN-ONE (English - Siap Copy ke Kling/Runway/Sora):
-                [Tulis SATU PARAGRAF PANJANG yang SANGAT DETAIL dan BERDIRI SENDIRI. Ulangi deskripsi wujud objek, tekstur, warna, latar belakang, dan pencahayaan agar AI Video tidak bingung. LALU gabungkan dengan: Pergerakan kamera (e.g., slow dolly in), pergerakan dinamis subjek, efek atmosfer, dan instruksi audio visual. Prompt ini harus sangat padat dan komprehensif].
+                🎥 PROMPT VIDEO ALL-IN-ONE (English - Kling/Runway Style):
+                [Self-contained paragraph. Deskripsikan wujud produk secara utuh (warna, tekstur, merek) + pergerakan kamera 5 detik + pergerakan subjek. AI Video harus tahu apa yang digerakkan tanpa melihat prompt gambar].
 
                 🎙️ ELEMEN AUDIO & TEKS (Bahasa Indonesia):
-                - Voice Over (VO): "[Naskah puitis, elegan, dan menjual]"
-                - SFX & Musik: "[Deskripsi detail suara taktil dan instrumen musik]"
-                - On-Screen Text: "[Teks singkat dan estetik yang muncul di layar]"
+                - Voice Over (VO): "[Naskah puitis]"
+                - SFX & Musik: "[Suara taktil & instrumen]"
+                - On-Screen Text: "[Teks estetik]"
                 ---
                 """
                 res = model.generate_content([master_prompt] + image_parts)
