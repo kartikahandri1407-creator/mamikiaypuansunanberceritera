@@ -2,21 +2,19 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfigurasi Halaman (Layout Paling Aman)
+# 1. Konfigurasi Halaman 
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS TOBAT NASUHA (Hanya mempercantik yang aman)
+# 2. CSS TOBAT NASUHA
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
     
-    /* Ganti Font Global */
     html, body, [class*="st-"] { 
         font-family: 'Plus Jakarta Sans', sans-serif; 
     }
     .stApp { background-color: #fafaf9; }
     
-    /* Judul Utama ala Butik */
     .main-title {
         font-family: 'Playfair Display', serif;
         color: #1c1917;
@@ -34,7 +32,6 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    /* Modifikasi Tombol "Mulai Tenun Cerita" menjadi Hitam Eksklusif */
     .stButton > button {
         background-color: #1c1917 !important; 
         color: #ffffff !important; 
@@ -50,12 +47,10 @@ st.markdown("""
         border: 1px solid #d4af37 !important;
     }
 
-    /* Sembunyikan bawaan Streamlit yang mengganggu */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Footer @mamikiaypuansunan */
     .footer-manis {
         text-align: center;
         padding: 20px;
@@ -80,9 +75,8 @@ else:
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_allow_html=True)
 
-# 5. Form Input (Murni Bawaan Streamlit)
+# 5. Form Input
 st.markdown("### 📸 Visual Produk")
-# Kita kembalikan uploader ke versi standar tanpa embel-embel
 uploaded_file = st.file_uploader("Unggah foto mahakarya (Opsional)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
@@ -103,7 +97,6 @@ with col2:
 
 details = st.text_area("Jiwa Produk & Pesan Utama", placeholder="Ceritakan rahasia atau nilai seni di balik produk ini...")
 
-# Tombol Eksekusi
 generate = st.button("Mulai Tenun Cerita ✨", use_container_width=True)
 
 # 6. Logika Eksekusi
@@ -119,11 +112,34 @@ if generate:
                     image_parts = [image]
 
                 model = genai.GenerativeModel('gemini-2.5-flash')
+                
+                # --- PROMPT FINAL: STRUKTUR LENGKAP + ESTETIKA NUSANTARA ---
                 master_prompt = f"""
-                Berperanlah sebagai Creative Director & Master Storyteller. Buatlah storyboard iklan {duration} rasio {format_video} untuk '{prod_name}'.
+                Anda adalah Creative Director kelas dunia dan Ahli AI Prompt Engineering yang memahami kekayaan visual budaya.
+                Buatlah storyboard iklan sinematik {duration} rasio {format_video} untuk mahakarya '{prod_name}'.
                 Kategori: {category}. Model: {model_type}. Deskripsi: {details}.
-                WAJIB SERTAKAN: Visual (Negative Space), Musik, SFX Taktil, dan Naskah VO puitis Bahasa Indonesia.
-                Prompt teknis video harus dalam Bahasa Inggris yang sangat detail.
+
+                INSTRUKSI PENTING: Berikan sentuhan kehangatan tropis, tekstur organik, atau elemen kearifan lokal yang dikemas secara super eksklusif dan mewah. Hindari gaya visual yang terlalu Skandinavia/Eropa dingin.
+
+                UBAH TOTAL FORMAT OUTPUT ANDA. Langsung berikan output per Scene dengan struktur WAJIB berikut ini secara berurutan:
+
+                ---
+                🎬 SCENE [Nomor]: [Nama Scene] ([Durasi detik])
+
+                👁️ DESKRIPSI VISUAL (Bahasa Indonesia):
+                [Jelaskan detail apa yang terlihat di layar. Jelaskan komposisi, negative space, pencahayaan, objek utama, dan suasana visual secara menyeluruh menggunakan bahasa yang mudah dipahami klien].
+
+                📸 PROMPT GAMBAR (English - Siap Copy ke Midjourney/DALL-E):
+                [Tulis prompt visual statis yang SANGAT DETAIL. Tentukan: Subject placement, extreme detail texture, camera angle, lens type, lighting setup (e.g., warm cinematic lighting), color grading, dan negative space. DILARANG memasukkan perintah teks/tulisan di dalam prompt ini].
+
+                🎥 PROMPT VIDEO ALL-IN-ONE (English - Siap Copy ke Kling/Runway/Sora):
+                [Tulis SATU PARAGRAF PANJANG yang SANGAT DETAIL dan BERDIRI SENDIRI. Ulangi deskripsi wujud objek, tekstur, warna, latar belakang, dan pencahayaan agar AI Video tidak bingung. LALU gabungkan dengan: Pergerakan kamera (e.g., slow dolly in), pergerakan dinamis subjek, efek atmosfer, dan instruksi audio visual. Prompt ini harus sangat padat dan komprehensif].
+
+                🎙️ ELEMEN AUDIO & TEKS (Bahasa Indonesia):
+                - Voice Over (VO): "[Naskah puitis, elegan, dan menjual]"
+                - SFX & Musik: "[Deskripsi detail suara taktil dan instrumen musik]"
+                - On-Screen Text: "[Teks singkat dan estetik yang muncul di layar]"
+                ---
                 """
                 res = model.generate_content([master_prompt] + image_parts)
                 st.balloons()
