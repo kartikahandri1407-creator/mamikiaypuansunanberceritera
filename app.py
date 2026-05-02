@@ -2,15 +2,14 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfigurasi Halaman (Paling Aman)
+# 1. Konfigurasi Halaman
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS TOBAT NASUHA + TOMBOL HITAM ELEGAN
+# 2. CSS UTAMA (Bersih dari CSS Uploader yang bikin kacau)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
     
-    /* Ganti Font Global */
     html, body, [class*="st-"] { 
         font-family: 'Plus Jakarta Sans', sans-serif; 
     }
@@ -33,7 +32,7 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    /* Mengembalikan Tombol Hitam Elegan Saja (Tanpa menyentuh yang lain) */
+    /* Tombol Hitam Elegan Bawah */
     .stButton > button {
         background-color: #1c1917 !important; 
         color: #ffffff !important; 
@@ -79,29 +78,80 @@ else:
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_allow_html=True)
 
-# 5. Form Input - Dibiarkan murni bawaan Streamlit agar tidak error
+# 5. Form Input - SOLUSI PAMUNGKAS UPLOADER 🔥
 st.markdown("### 📸 Visual Produk")
-uploaded_file = st.file_uploader("Unggah foto mahakarya (Opsional)", type=["jpg", "jpeg", "png"])
+
+# Buat container khusus
+uploader_container = st.container()
+with uploader_container:
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        # File uploader TANPA LABEL + PLACEHOLDER CUSTOM
+        uploaded_file = st.file_uploader(
+            label="",
+            type=["jpg", "jpeg", "png"],
+            help="📸 Unggah foto mahakarya (Max 5MB)"
+        )
+        
+        # Custom CSS INJECTOR - HANYA untuk container ini
+        st.markdown("""
+        <style>
+        /* TARGET SPESIFIK - hanya uploader di container ini */
+        div[data-testid="stFileUploader"] > label {
+            display: none !important;
+        }
+        div[data-testid="stFileUploadDropzone"] > div > div > span,
+        div[data-testid="stFileUploadDropzone"] > div > div > small {
+            display: none !important;
+        }
+        div[data-testid="stFileUploadDropzone"] button {
+            background: linear-gradient(135deg, #fffdf9 0%, #f8f5f2 100%) !important;
+            border: 2px solid #d4af37 !important;
+            border-radius: 12px !important;
+            height: 50px !important;
+            width: 240px !important;
+            margin: 0 auto !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            box-shadow: 0 4px 15px rgba(212,175,55,0.2);
+        }
+        div[data-testid="stFileUploadDropzone"] button::after {
+            content: '✨ Pilih Mahakarya Anda' !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            color: #1c1917 !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+        }
+        div[data-testid="stFileUploadDropzone"] button:hover {
+            border-color: #b8942f !important;
+            box-shadow: 0 6px 20px rgba(212,175,55,0.3) !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
 if uploaded_file:
-    st.image(uploaded_file, caption="Visual Terdeteksi", use_container_width=True)
+    st.image(uploaded_file, caption="✅ Visual Terdeteksi", use_container_width=True)
 
 st.divider()
 
 st.markdown("### ✍️ Narasi Produk")
 prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Tapis Pinang Mas")
 
-col1, col2 = st.columns(2)
-with col1:
+col_a, col_b = st.columns(2)
+with col_a:
     category = st.selectbox("Klasifikasi", ["Kriya & Warisan", "Kuliner Premium", "Fashion & Lifestyle", "Beauty & Aura", "Hospitality", "Agrowisata"])
     duration = st.selectbox("Durasi", ["15 Detik", "30 Detik", "60 Detik"])
-with col2:
+with col_b:
     format_video = st.selectbox("Format/Rasio", ["9:16 (Vertical)", "1:1 (Square)", "16:9 (Widescreen)"])
     model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia", "Remaja"])
 
 details = st.text_area("Jiwa Produk & Pesan Utama", placeholder="Ceritakan rahasia atau nilai seni di balik produk ini...")
 
-# Tombol dengan CSS baru
+# Tombol Eksekusi
 generate = st.button("Mulai Tenun Cerita ✨", use_container_width=True)
 
 # 6. Logika Eksekusi
