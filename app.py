@@ -75,15 +75,15 @@ st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_a
 
 # 5. Form Input
 st.markdown("### 📸 Visual Produk")
-uploaded_file = st.file_uploader("Unggah foto produk asli (Referansi Label & Kemasan)", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Unggah foto produk asli (Referensi Utama)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="Identitas Visual Asli Terdeteksi", use_container_width=True)
+    st.image(uploaded_file, caption="Identitas Visual Terkunci", use_container_width=True)
 
 st.divider()
 
 st.markdown("### ✍️ Narasi Produk")
-prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Keripik Pisang Sumber Rejeki")
+prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Keripik Pisang KWT Sumber Rejeki II")
 
 col1, col2 = st.columns(2)
 with col1:
@@ -102,7 +102,7 @@ if generate:
     if not prod_name or not details:
         st.warning("Mohon lengkapi Nama Mahakarya dan Jiwa Produk.")
     else:
-        with st.spinner("📜 Mamiki sedang membaca label dan mengunci identitas produk..."):
+        with st.spinner("📜 Mamiki sedang menyusun narasi dan teks butik Anda..."):
             try:
                 image_parts = []
                 if uploaded_file:
@@ -111,43 +111,46 @@ if generate:
 
                 model = genai.GenerativeModel('gemini-2.5-flash')
                 
-                # --- PROMPT VERSION: IDENTITY LOCK & TEXT PRESERVATION ---
+                # --- PROMPT VERSION: LUXURY UX & INDONESIAN PURITY ---
                 master_prompt = f"""
-                Anda adalah Creative Director & Ahli Fotografi Produk Komersial.
-                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk '{prod_name}'.
+                Anda adalah Creative Director & UX Copywriter Senior. 
+                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk mahakarya: '{prod_name}'.
 
-                ATURAN KHUSUS ANALISIS GAMBAR (BRANDING LOCK):
-                1. IDENTIFIKASI LABEL: Lihat gambar yang diunggah. Ada label kuning dengan teks dan logo (misal: Logo Halal, Nama Merek, No WA). 
-                2. REPLIKASI TEKS: Pada Prompt Gambar dan Video di Scene terakhir, Anda WAJIB mendeskripsikan label tersebut secara mendetail: "Yellow label with original branding text, cartoon mascot, and Halal logo as seen in the reference image."
-                3. ANTI-BLANK LABEL: Dilarang keras membiarkan label menjadi polos atau kosong. Kemasan harus tampil 1:1 dengan aslinya namun dengan pencahayaan sinematik.
+                ATURAN HARGA MATI TEKS & BAHASA:
+                1. 100% BAHASA INDONESIA: Gunakan padanan kata yang puitis, eksklusif, dan indah. Dilarang menggunakan istilah Inggris seperti "Crisp", "Natural", "Best Seller", dll. Gunakan kata seperti "Renyah Alami", "Sentuhan Murni", "Warisan Terpilih".
+                2. FONT & STYLE: Untuk setiap scene, tentukan jenis font yang digunakan (e.g., 'Modern Serif untuk kemewahan' atau 'Elegant Sans-Serif untuk kesegaran').
+                3. UX PLACEMENT: Tentukan posisi teks di layar (misal: 'Sudut bawah kanan' atau 'Tengah atas dengan margin luas'). Teks TIDAK BOLEH mengganggu atau menutupi detail produk utama.
+                4. BRANDING: Pastikan teks di layar konsisten dengan merek pada gambar referensi.
 
-                STRUKTUR SCENE (Potongan 5 detik):
-                - Scene awal: Fokus ke tekstur isi produk (organik & sinematik).
-                - Scene akhir: Fokus ke kemasan utuh (Product Reveal) sesuai foto referensi.
+                ATURAN KONTINUITAS:
+                - Durasi per Scene tepat 5 detik.
+                - Jika ada model (Model: {model_type}), detail mikro (kutek kuku, baju) harus KONSISTEN di setiap prompt video.
+                - Suara VO harus memiliki satu persona yang sama dari awal sampai akhir.
 
                 FORMAT OUTPUT (WAJIB):
                 ---
                 🎬 SCENE [Nomor]: [Nama Scene] (5 detik)
 
                 👁️ DESKRIPSI VISUAL (Bahasa Indonesia):
-                [Jelaskan visual secara puitis. Scene akhir wajib menyebutkan kemasan dengan branding yang utuh sesuai gambar].
+                [Detail komposisi, pencahayaan, dan konfirmasi konsistensi detail mikro].
 
                 📸 PROMPT GAMBAR (English - Midjourney Style):
-                [Sertakan instruksi: "Exact replica of the yellow label from the reference image, including all text and logos, realistic lighting, macro texture"].
+                [Static detail. Deskripsikan merek & kemasan SESUAI gambar referensi. NO TEXT IN IMAGE].
 
                 🎥 PROMPT VIDEO ALL-IN-ONE (English - Kling Style):
-                [Deskripsikan pergerakan kamera 5 detik yang menyorot label dan kemasan asli secara perlahan (slow zoom/pan). Tegaskan bahwa teks pada label harus terlihat jelas dan tidak boleh dihilangkan].
+                [Self-contained paragraph. Deskripsikan wujud produk/kemasan + pergerakan kamera 5 detik + detail model].
 
                 🎙️ ELEMEN AUDIO & TEKS (Bahasa Indonesia):
-                - Voice Over (VO): "[Naskah puitis]"
-                - SFX & Musik: "[Suara taktil & instrumen lokal]"
-                - On-Screen Text: "[Teks estetik]"
+                - Voice Over (VO): "[Naskah mengalir dan puitis]"
+                - SFX & Musik: "[Deskripsi instrumen lokal & suara taktil]"
+                - On-Screen Text: "[TEKS DALAM BAHASA INDONESIA YANG INDAH]"
+                - Font Style & Position: "[Tentukan jenis font dan posisi agar tidak menutupi produk]"
                 ---
                 """
                 res = model.generate_content([master_prompt] + image_parts)
                 st.balloons()
                 
-                st.markdown("### 🎞️ Hasil Racikan Mahakarya (Identity Locked)")
+                st.markdown("### 🎞️ Hasil Racikan Mahakarya (UX & Branding Optimized)")
                 st.info(res.text) 
                 
                 st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt", use_container_width=True)
