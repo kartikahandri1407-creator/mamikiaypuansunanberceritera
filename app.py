@@ -5,7 +5,7 @@ from PIL import Image
 # 1. Konfigurasi Halaman (Paling Aman)
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS TOBAT NASUHA (Hanya sentuh Font, Judul, dan Footer)
+# 2. CSS TOBAT NASUHA + TOMBOL HITAM ELEGAN
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
@@ -31,6 +31,22 @@ st.markdown("""
         font-size: 0.85rem;
         margin-bottom: 30px;
         text-transform: uppercase;
+    }
+
+    /* Mengembalikan Tombol Hitam Elegan Saja (Tanpa menyentuh yang lain) */
+    .stButton > button {
+        background-color: #1c1917 !important; 
+        color: #ffffff !important; 
+        border-radius: 8px !important; 
+        font-weight: 600 !important; 
+        border: 1px solid #1c1917 !important;
+        padding: 12px !important;
+        margin-top: 10px !important;
+    }
+    .stButton > button:hover { 
+        background-color: #ffffff !important; 
+        color: #1c1917 !important; 
+        border: 1px solid #d4af37 !important;
     }
 
     /* Sembunyikan bawaan Streamlit */
@@ -85,7 +101,7 @@ with col2:
 
 details = st.text_area("Jiwa Produk & Pesan Utama", placeholder="Ceritakan rahasia atau nilai seni di balik produk ini...")
 
-# Tombol murni bawaan Streamlit
+# Tombol dengan CSS baru
 generate = st.button("Mulai Tenun Cerita ✨", use_container_width=True)
 
 # 6. Logika Eksekusi
@@ -111,7 +127,7 @@ if generate:
                 st.balloons()
                 
                 st.markdown("### 🎞️ Hasil Racikan Mahakarya")
-                st.info(res.text) # Menggunakan info box bawaan
+                st.info(res.text) 
                 
                 st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt", use_container_width=True)
             except Exception as e:
