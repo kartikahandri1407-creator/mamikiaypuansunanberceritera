@@ -5,7 +5,7 @@ from PIL import Image
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS OBAT BIUS TOTAL ANTI-TUMPUK
+# 2. CSS - JURUS PAMUNGKAS UPLOADER V2 (TOTAL ANNIHILATION)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
@@ -30,43 +30,70 @@ st.markdown("""
         text-transform: uppercase;
     }
 
-    /* --- JURUS PAMUNGKAS UPLOADER --- */
-    /* 1. Sembunyikan teks 'Drag and drop' & Limit ukuran file */
-    [data-testid="stFileUploadDropzone"] > div > div > span,
-    [data-testid="stFileUploadDropzone"] > div > div > small {
+    /* --- JURUS PAMUNGKAS UPLOADER V2 - TOTAL ANNIHILATION --- */
+    
+    /* 1. Sembunyikan LABEL uploader */
+    [data-testid="stFileUploader"] label {
         display: none !important;
     }
     
-    /* 2. "Butakan" teks asli di tombol yang bikin tumpuk */
+    /* 2. Sembunyikan SEMUA teks default di dropzone */
+    [data-testid="stFileUploadDropzone"] > div > div > span,
+    [data-testid="stFileUploadDropzone"] > div > div > small,
+    [data-testid="stFileUploadDropzone"] div[style*="text-align: center"] {
+        display: none !important;
+    }
+    
+    /* 3. Custom tombol cantik */
     [data-testid="stFileUploadDropzone"] button {
         color: transparent !important;
         font-size: 0px !important; 
-        background-color: #ffffff !important;
-        border: 1px solid #d4af37 !important;
-        border-radius: 8px !important;
-        position: relative;
-        height: 42px !important; 
-        width: 180px !important; 
+        background: linear-gradient(135deg, #ffffff 0%, #f8f5f2 100%) !important;
+        border: 2px solid #d4af37 !important;
+        border-radius: 12px !important;
+        position: relative !important;
+        height: 48px !important; 
+        width: 220px !important; 
         margin: 0 auto !important;
         display: block !important;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+        transition: all 0.3s ease;
     }
-
-    /* 3. Suntikkan teks rapi buatan kita di tengah tombol */
+    [data-testid="stFileUploadDropzone"] button:hover {
+        border-color: #b8942f !important;
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
+        transform: translateY(-2px);
+    }
+    
+    /* 4. Teks custom yang elegan */
     [data-testid="stFileUploadDropzone"] button::after {
-        content: 'Pilih Mahakarya 📸';
+        content: '📸 Pilih Mahakarya';
         font-size: 14px !important;
         color: #1c1917 !important;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-weight: 600;
-        visibility: visible !important;
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px;
     }
-
-    /* Pastikan input aslinya benar-benar hilang wujudnya */
+    
+    /* 5. Hilangkan input file asli */
     [data-testid="stFileUploadDropzone"] input[type="file"] {
         opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+
+    /* --- Form Input styling --- */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div, .stTextArea>div>div>textarea {
+        border-radius: 8px !important;
+        border: 1px solid #e7e5e4 !important;
+        padding: 12px !important;
+    }
+    .stTextInput>div>div>input:focus, .stSelectbox>div>div>div:focus, .stTextArea>div>div>textarea:focus {
+        border-color: #d4af37 !important;
+        box-shadow: 0 0 0 1px #d4af37 !important;
     }
 
     /* --- Tombol Generate --- */
@@ -123,7 +150,8 @@ st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_a
 
 # 5. Form Input
 st.subheader("📸 Visual Produk")
-uploaded_file = st.file_uploader("Unggah foto mahakarya di sini (Opsional)", type=["jpg", "jpeg", "png"])
+# Mengosongkan string label pertama agar tidak muncul judul bawaan Streamlit
+uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"], help="Unggah foto mahakarya (Opsional)")
 
 if uploaded_file:
     st.image(uploaded_file, caption="Visual Terdeteksi", use_container_width=True)
