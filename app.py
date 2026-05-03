@@ -71,14 +71,22 @@ else:
 
 # 4. Header
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>DIRECTOR'S CUT & CAMPAIGN KIT</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>DIRECTOR'S CUT & CASTING AGENCY</div>", unsafe_allow_html=True)
 
 # 5. Form Input
-st.markdown("### 📸 Visual Produk")
-uploaded_file = st.file_uploader("Unggah foto produk asli (WAJIB untuk Kunci Bentuk & Kemasan)", type=["jpg", "jpeg", "png"])
+st.markdown("### 📸 Visual Referensi")
 
-if uploaded_file:
-    st.image(uploaded_file, caption="Referensi Visual Terkunci", use_container_width=True)
+# DUA KOLOM UPLOAD
+col_up1, col_up2 = st.columns(2)
+with col_up1:
+    uploaded_file = st.file_uploader("1. Foto Produk (WAJIB)", type=["jpg", "jpeg", "png"])
+    if uploaded_file:
+        st.image(uploaded_file, caption="Produk Terkunci", use_container_width=True)
+
+with col_up2:
+    uploaded_model = st.file_uploader("2. Foto Model (OPSIONAL)", type=["jpg", "jpeg", "png"])
+    if uploaded_model:
+        st.image(uploaded_model, caption="Aktor Terkunci", use_container_width=True)
 
 st.divider()
 
@@ -107,7 +115,12 @@ with c1:
 
 with c2:
     format_video = st.selectbox("Format/Rasio", ["9:16 (Vertical)", "1:1 (Square)", "16:9 (Widescreen)"])
-    model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia"])
+    
+    # Logika Cerdas: Jika user upload foto model, otomatis pilih "Pakai Model Sendiri"
+    if uploaded_model:
+        model_type = st.selectbox("Tokoh (Model)", ["Menggunakan Referensi Foto Model Terunggah"])
+    else:
+        model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia"])
 
 c3, c4 = st.columns(2)
 with c3:
@@ -148,12 +161,22 @@ if generate:
                 elif "16:9" in format_video:
                     ar_param = "--ar 16:9"
 
-                image = Image.open(uploaded_file)
-                image_parts = [image]
+                # Siapkan Part Gambar untuk Gemini
+                image_parts = [Image.open(uploaded_file)]
+                
+                # Instruksi dinamis jika ada foto model
+                model_instruction = """
+                - KONTINUITAS AKTOR/MODEL: Jika menggunakan model, tetapkan profil fisik yang SANGAT SPESIFIK (misal: "A 30-year-old Asian woman wearing an elegant minimalist white silk blouse"). Salin deskripsi ini di setiap prompt Gambar dan Video.
+                """
+                if uploaded_model:
+                    image_parts.append(Image.open(uploaded_model))
+                    model_instruction = """
+                    - KONTINUITAS AKTOR/MODEL (WAJIB): Terdapat DUA gambar referensi yang diunggah. Gambar pertama adalah PRODUK. Gambar kedua adalah WAJAH DAN FISIK MODEL. Analisis dengan presisi fitur wajah, rambut, dan pakaian model dari gambar kedua. Gunakan deskripsi akurat model ini di SEMUA scene. Pada prompt Midjourney, WAJIB tambahkan instruksi `[INSERT MODEL IMAGE URL] --cref [INSERT MODEL IMAGE URL] --cw 100` di akhir prompt. Pada prompt Kling/Video, tulis "Character must perfectly match the uploaded facial reference image."
+                    """
 
                 model = genai.GenerativeModel('gemini-2.5-flash')
                 
-                # --- PROMPT VERSION: ROBUST FORMAT (NO TABS, FULL SCROLL) ---
+                # --- PROMPT VERSION: ULTIMATE DIRECTOR + CASTING ---
                 master_prompt = f"""
                 Anda adalah Sutradara Iklan TV Komersial Kelas Dunia (sekelas sutradara iklan Apple, otomotif mewah) & Copywriter Elite.
                 Tugas: Buat storyboard iklan TV {duration} rasio {format_video} untuk mahakarya '{prod_name}'.
@@ -161,22 +184,27 @@ if generate:
                 KATEGORI: {category}.
                 GAYA VISUAL: {tone_style}. 
                 GAYA BAHASA: {lang_style}.
-                MODEL: {model_type}.
+                TIPE MODEL: {model_type}.
 
                 ATURAN SINEMATOGRAFI KELAS DUNIA:
                 - Visual "Iklan Mahal": Seluruh scene HARUS memancarkan aura iklan berbiaya miliaran rupiah.
                 - Kamera & Lighting: Di prompt bahasa Inggris, WAJIB gunakan istilah ("Shot on Arri Alexa 65", "Phantom Flex 4k", "Laowa Probe Lens", "cinematic chiaroscuro").
-                - Naskah (VO): Eksekusinya harus tetap tajam, eksklusif, dan elegan layaknya iklan TV nasional.
-
-                ATURAN HARGA MATI (ANTI-HALU GAMBAR):
-                1. BENTUK FISIK: Deskripsikan bentuk asli produk dengan presisi (misal: "long lengthwise sliced"). JANGAN MENGARANG bentuk.
-                2. BRANDING: Replikasi 100% detail teks, warna, dan logo pada kemasan.
-                3. KONSISTENSI: Di setiap prompt bahasa Inggris, WAJIB sertakan: "Exactly matching the provided reference image".
-
-                FORMAT OUTPUT (WAJIB GUNAKAN MARKDOWN INI SEBAGAIMANA ADANYA, JANGAN DIPOTONG):
                 
-                ## 🔍 ANALISIS VISUAL REFERENSI
-                [Detail analisis akurat bentuk fisik dan kemasan dari gambar referensi]
+                ATURAN KONTINUITAS VISUAL & AUDIO (SANGAT PENTING):
+                {model_instruction}
+                - KONTINUITAS VO: Tetapkan SATU karakter suara eksplisit (misal: "VO: Suara Pria Dewasa, berwibawa"). Jangan biarkan suaranya berubah-ubah.
+                - KONTINUITAS MUSIK: Musik dari Scene 1 sampai akhir HARUS berupa SATU lagu yang utuh. Gunakan genre dan instrumen yang sama di setiap scene, hanya ubah dinamikanya (Intro, Build-up, Klimaks).
+
+                ATURAN HARGA MATI (ANTI-HALU GAMBAR PRODUK):
+                1. BENTUK FISIK: Deskripsikan bentuk asli produk (Gambar Pertama) dengan presisi. JANGAN MENGARANG bentuk.
+                2. BRANDING: Replikasi 100% detail teks, warna, dan logo pada kemasan.
+                3. KONSISTENSI PRODUK: Di setiap prompt Inggris, WAJIB sertakan: "Product exactly matching the provided reference image".
+
+                FORMAT OUTPUT (WAJIB GUNAKAN MARKDOWN INI SEBAGAIMANA ADANYA):
+                
+                ## 🔍 ANALISIS VISUAL REFERENSI & KONTINUITAS
+                - **Analisis Produk:** [Detail akurat fisik produk dan kemasan]
+                - **Profil Model Kontinu:** [Detail analisis fisik dari gambar model kedua yang diunggah ATAU deskripsi fisik karangan jika tidak ada gambar model. Tulis "Fokus Produk" jika tanpa model]
 
                 ---
                 ## 🎬 SCENE 1: [Nama Scene] (5 detik)
@@ -184,28 +212,28 @@ if generate:
 
                 **📸 PROMPT GAMBAR:**
                 ```text
-                [Cinematic photography. High-end lighting/camera terms. EXACT physical shape & branding. INCLUDE: "Exactly matching the provided reference image."] {ar_param} --style raw --v 6.0
+                [Cinematic photography. High-end lighting terms. EXACT physical shape & branding. INCLUDE Profil Model Kontinu jika ada. INCLUDE "Product exactly matching the provided reference image". Jika ada model referensi, tambahkan: --cref [URL_GAMBAR_MODEL] --cw 100] {ar_param} --style raw --v 6.0
                 ```
 
                 **🎥 PROMPT VIDEO:**
                 ```text
-                [EXACT product shape + High-end Camera Angle + 5-sec Camera Movement. INCLUDE: "Product and packaging must be identical to the uploaded reference image."]
+                [EXACT product shape + Profil Model Kontinu jika ada + High-end Camera Angle. INCLUDE "Product and packaging must be identical to the uploaded reference image."]
                 ```
 
-                **🎙️ ELEMEN AUDIO:** [Naskah VO kelas atas sesuai {lang_style}] & [SFX/Musik taktil]
+                **🎙️ ELEMEN AUDIO:** [Karakter VO eksplisit] - "[Naskah kelas atas]" & [SFX/Musik taktil]
                 
                 **🎵 PROMPT MUSIK AI:**
                 ```text
-                [Genre, tempo, mood for a high-budget commercial]
+                [Genre, tempo, mood. Establish the core instrumentation here.]
                 ```
 
                 ---
                 ## 🎬 SCENE 2: [Nama Scene] (5 detik)
-                [Lanjutkan format detail scene seperti Scene 1 di sini...]
+                [Lanjutkan format scene. WAJIB ulangi deskripsi baju/fisik model. Teruskan instrumen musik yang sama.]
 
                 ---
                 ## 🎬 SCENE 3: [Nama Scene] (5 detik)
-                [Lanjutkan format detail scene seperti Scene 1 di sini...]
+                [Lanjutkan format scene. WAJIB ulangi deskripsi baju/fisik model. Buat klimaks musik dari instrumen Scene 1.]
 
                 ---
                 ## 📱 CAMPAIGN KIT & SOCIAL MEDIA
