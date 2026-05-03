@@ -32,7 +32,6 @@ st.markdown("""
     html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif; }
     .stApp { background-color: #fafaf9; }
     
-    /* Hero */
     .main-title {
         font-family: 'Playfair Display', serif;
         color: #1c1917;
@@ -59,7 +58,6 @@ st.markdown("""
         margin-bottom: 30px;
         font-style: italic;
     }
-    
     .preset-label {
         font-size: 0.78rem;
         font-weight: 700;
@@ -68,8 +66,6 @@ st.markdown("""
         letter-spacing: 1.5px;
         text-transform: uppercase;
     }
-    
-    /* Buttons */
     .stButton > button {
         background-color: #1c1917 !important; 
         color: #ffffff !important; 
@@ -85,8 +81,6 @@ st.markdown("""
         border: 1px solid #d4af37 !important;
         transform: translateY(-1px);
     }
-    
-    /* Tabs */
     .stTabs [data-baseweb="tab-list"] {
         gap: 4px;
         background: #f5f5f4;
@@ -103,8 +97,6 @@ st.markdown("""
         background: #1c1917 !important;
         color: white !important;
     }
-    
-    /* Helper Tip Box */
     .helper-tip {
         background: #fef3c7;
         border-left: 3px solid #d4af37;
@@ -114,20 +106,15 @@ st.markdown("""
         color: #57534e;
         margin: 10px 0 18px 0;
     }
-    
-    /* File Uploader */
     [data-testid="stFileUploader"] {
         background: #ffffff;
         border-radius: 10px;
         padding: 6px;
         border: 1px dashed #e7e5e4;
     }
-    
-    /* Hide Streamlit branding */
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    
     .footer-manis {
         text-align: center;
         padding: 25px;
@@ -150,7 +137,7 @@ st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_
 st.markdown("<p class='tagline'>Iklan TVC sinematik untuk UMKM, dalam hitungan menit.</p>", unsafe_allow_html=True)
 
 # ============================================
-# 5. API SETUP - HARD STOP KALAU GA ADA
+# 5. API SETUP
 # ============================================
 api_key = st.secrets.get("GEMINI_API_KEY")
 if not api_key:
@@ -159,7 +146,7 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # ============================================
-# 6. PRESETS - QUICK START UNTUK UMKM
+# 6. PRESETS
 # ============================================
 PRESETS = {
     "🍿 Kuliner Snack": {
@@ -215,7 +202,7 @@ def get_preset_value(field, default):
 if st.session_state.preset_loaded:
     pcol1, pcol2 = st.columns([4, 1])
     with pcol1:
-        st.success(f"✓ Template aktif: **{st.session_state.preset_loaded}** — semua field di tab di bawah sudah disesuaikan, masih bisa diubah.")
+        st.success(f"✓ Template aktif: **{st.session_state.preset_loaded}** — semua field sudah disesuaikan, masih bisa diubah.")
     with pcol2:
         if st.button("✕ Reset", use_container_width=True):
             st.session_state.preset_loaded = None
@@ -224,7 +211,7 @@ if st.session_state.preset_loaded:
 st.divider()
 
 # ============================================
-# 7. TABS UNTUK ORGANIZE INPUT
+# 7. TABS INPUT
 # ============================================
 tab1, tab2, tab3, tab4 = st.tabs(["📸 Visual", "🏷️ Produk", "🎬 Setting", "✍️ Pesan"])
 
@@ -235,31 +222,30 @@ with tab1:
     col_up1, col_up2 = st.columns(2)
     with col_up1:
         uploaded_file = st.file_uploader(
-            "Foto Produk *", 
+            "Foto Produk * (Image 1)", 
             type=["jpg", "jpeg", "png"],
             help="Pakai foto produk yang jernih & cahaya cukup."
         )
         if uploaded_file:
             try:
-                st.image(uploaded_file, caption="✓ Produk terkunci", use_container_width=True)
+                st.image(uploaded_file, caption="✓ Image 1 — Produk terkunci", use_container_width=True)
             except Exception:
                 st.error("File foto produk korup. Coba upload ulang.")
                 uploaded_file = None
     
     with col_up2:
         uploaded_model = st.file_uploader(
-            "Foto Model (opsional)", 
+            "Foto Model (opsional) (Image 2)", 
             type=["jpg", "jpeg", "png"],
             help="Punya talent sendiri? Upload di sini biar AI lock wajahnya."
         )
         if uploaded_model:
             try:
-                st.image(uploaded_model, caption="✓ Aktor terkunci", use_container_width=True)
+                st.image(uploaded_model, caption="✓ Image 2 — Aktor terkunci", use_container_width=True)
             except Exception:
                 st.error("File foto model korup. Coba upload ulang.")
                 uploaded_model = None
     
-    # Talent profile (kalau ga upload model)
     if not uploaded_model:
         st.markdown("**Profil Model (kalau tidak upload foto):**")
         td1, td2, td3 = st.columns(3)
@@ -403,7 +389,7 @@ if generate:
         st.warning("🚨 Lengkapi **Nama Produk** (tab Produk) & **Cerita Produk** (tab Pesan) dulu ya!")
         st.stop()
     
-    # Dynamic Scene Config (FIX BUG: scene count mengikuti durasi)
+    # Dynamic Scene Config
     scene_config = {
         "15 Detik": {"count": 3, "per_scene": "5 detik"},
         "30 Detik": {"count": 5, "per_scene": "6 detik"},
@@ -412,135 +398,292 @@ if generate:
     cfg = scene_config[duration]
     scene_count = cfg["count"]
     scene_dur = cfg["per_scene"]
-    
-    # Talent Description
-    if uploaded_model:
-        talent_desc = "Gunakan profil wajah dari Gambar 2 (foto model). Pertahankan identitas wajah konsisten di semua scene."
+
+    # Aspect ratio parameter
+    ar_param = "--ar 9:16"
+    if "1:1" in format_video:
+        ar_param = "--ar 1:1"
+    elif "16:9" in format_video:
+        ar_param = "--ar 16:9"
+
+    # -------------------------------------------------------
+    # WARDROBE RESOLUTION
+    # Wardrobe_desc diteruskan ke setiap prompt secara eksplisit.
+    # Jika user pilih "Otomatis", AI tetap punya anchor deskripsi.
+    # -------------------------------------------------------
+    WARDROBE_AUTO_MAP = {
+        "Mewah (Luxury/Gold)":         "elegant silk blouse or well-fitted blazer in cream/gold tones, minimal jewelry",
+        "Tradisional (Heritage/Warm)": "neat modern kebaya or batik outfit in warm earth tones, traditional Lampung accent",
+        "Modern (Minimalist/Clean)":   "linen short-sleeve shirt in broken-white rolled at elbows, khaki or light-gray chino pants",
+        "Premium (High-End/Elegant)":  "slim-fit blazer in charcoal or navy over a clean white shirt, no tie, minimal accessories",
+        "Ceria (Fun/Energetic)":       "bright casual t-shirt in solid color (mustard/coral/white), clean jogger or chino pants",
+    }
+
+    if wardrobe_desc == "Otomatis Sesuai Tone Iklan":
+        wardrobe_for_prompt = WARDROBE_AUTO_MAP.get(tone_style, "clean casual outfit appropriate for the ad tone")
+        wardrobe_label = f"Auto ({tone_style}): {wardrobe_for_prompt}"
     else:
-        talent_desc = (f"Buat profil model: {talent_gender}, usia {talent_age}, look {talent_ethnicity}. "
-                       "Pertahankan identitas wajah yang sama PERSIS di semua scene.")
-    
+        wardrobe_for_prompt = wardrobe_desc
+        wardrobe_label = wardrobe_desc
+
+    # -------------------------------------------------------
+    # TALENT DESCRIPTION
+    # -------------------------------------------------------
+    if uploaded_model:
+        talent_anchor = (
+            "EXACT same talent face and physical appearance as Image 2 (character reference). "
+            f"Wardrobe locked: {wardrobe_for_prompt}. "
+            "This wardrobe MUST be IDENTICAL across every single scene — no variation, no substitution."
+        )
+        talent_label_line = "📷 **Image 1** (produk) + 📷 **Image 2** (model/wajah talent) — keduanya WAJIB disertakan"
+        image_ref_instruction = (
+            "PENTING UNTUK TOOLS AI GAMBAR: "
+            "Gunakan Image 1 sebagai product reference. "
+            "Gunakan Image 2 sebagai character reference (--cref di Midjourney, atau 'Character Reference' di Flux/Kling). "
+            "Wajah, kulit, rambut talent HARUS IDENTIK dengan Image 2 di semua scene tanpa pengecualian."
+        )
+    else:
+        talent_anchor = (
+            f"Generate consistent talent: {talent_gender}, usia {talent_age}, etnis/look {talent_ethnicity}. "
+            f"Wardrobe locked: {wardrobe_for_prompt}. "
+            "This SAME face, SAME body type, SAME wardrobe MUST appear IDENTICALLY across every single scene. "
+            "Do NOT change the character's appearance between scenes."
+        )
+        talent_label_line = "📷 **Image 1** (produk) — wajib disertakan | Model: AI-generated (konsisten lintas scene)"
+        image_ref_instruction = (
+            "PENTING UNTUK TOOLS AI GAMBAR: "
+            "Gunakan Image 1 sebagai product reference. "
+            "Untuk konsistensi wajah model tanpa Image 2: gunakan fitur 'Consistent Character' atau seed yang sama di setiap scene generation."
+        )
+
+    # -------------------------------------------------------
+    # BUILD SCENE BLOCKS
+    # -------------------------------------------------------
+    scene_blocks = []
+    for i in range(1, scene_count + 1):
+        # Scene role
+        if i == 1:
+            scene_role = "OPENING HOOK — Tarik perhatian dalam 1 detik pertama"
+        elif i == scene_count:
+            scene_role = f"KLIMAKS & CTA — Tampilkan produk jelas + ajakan '{cta_goal}'"
+        elif i == scene_count - 1:
+            scene_role = "PUNCAK EMOSI — Tunjukkan keunggulan & manfaat utama produk"
+        else:
+            scene_role = "BUILD UP — Bangun cerita, desire, dan koneksi emosi"
+
+        # Scene-specific camera notes
+        camera_notes = {
+            1: f"Slow dolly-forward or slider shot. Establish setting at {location_desc}.",
+            2: "Push-in close-up. Focus on product detail and talent reaction.",
+            3: "Static medium shot with subtle pull-back. Build emotional peak.",
+            4: "Low angle close-up of product. Hero shot — product is the star.",
+            5: "Medium shot, talent facing camera confidently. Resolution moment.",
+            6: f"Wide pull-out to full scene at {location_desc}. Grand finale with CTA overlay.",
+        }
+        cam = camera_notes.get(i, "Dynamic shot appropriate to scene energy.")
+
+        scene_blocks.append(f"""
+---
+
+## 🎬 SCENE {i} / {scene_count}: [BERI NAMA SCENE INI] ({scene_dur})
+
+**🎯 PERAN SCENE:** {scene_role}
+
+**📷 REFERENSI GAMBAR YANG DIBUTUHKAN UNTUK SCENE INI:**
+{talent_label_line}
+> {image_ref_instruction}
+
+**👁️ DESKRIPSI VISUAL (untuk sutradara/storyboard artist):**
+[Tulis deskripsi sinematik detail: action talent, posisi produk, pencahayaan, komposisi frame. Setting wajib di {location_desc}. Talent wajib mengenakan {wardrobe_for_prompt}. Sinematografi gaya Arri Alexa, {format_video}.]
+
+**📸 PROMPT GAMBAR — copy langsung ke Midjourney / Flux / Leonardo:**
+```
+[SHOT TYPE: contoh Cinematic medium shot / extreme close-up / wide establishing shot], EXACT product appearance from Image 1 ({prod_name} — [AI: deskripsikan kemasan/warna/bentuk/label persis dari Image 1]), {talent_anchor}, setting: {location_desc}, [AKSI SPESIFIK SCENE INI], [MOOD PENCAHAYAAN sesuai tone {tone_style}], shallow depth of field, warm bokeh, Arri Alexa color science, professional cinematography {ar_param} --v 6.0
+```
+
+**🎥 PROMPT VIDEO — copy langsung ke Kling AI / Runway / Hailuo:**
+```
+{cam} {talent_anchor} Setting: {location_desc}. [AKSI SPESIFIK SCENE INI]. EXACT {prod_name} from Image 1 [posisi & cara pegang produk]. {tone_style} mood, warm natural lighting. Arri Alexa cinematic grade, shallow DOF, smooth {ar_param.replace('--ar ', '')} framing. Duration: {scene_dur}.
+```
+
+**🎙️ ELEMEN AUDIO:**
+- **VO Scene {i} ({lang_style}):** "[Kalimat VO yang menyambung dari scene sebelumnya — 1 narasi utuh yang dipotong per scene, BUKAN kalimat berdiri sendiri]"
+- **SFX:** [Sound effect spesifik & realistis untuk momen ini]
+- **Musik:** [Perkembangan musik dari scene sebelumnya — genre/instrumen/tempo harus KONSISTEN, hanya dinamika yang berubah]
+""")
+
+    scene_template = "\n".join(scene_blocks)
+
+    # -------------------------------------------------------
+    # MASTER PROMPT KE GEMINI
+    # -------------------------------------------------------
     with st.spinner(f"📜 Menyusun {scene_count} scene mahakarya di {location_desc}..."):
         try:
-            # Aspect ratio
-            ar_param = "--ar 9:16"
-            if "1:1" in format_video:
-                ar_param = "--ar 1:1"
-            elif "16:9" in format_video:
-                ar_param = "--ar 16:9"
-            
             image_parts = [Image.open(uploaded_file)]
             if uploaded_model:
                 image_parts.append(Image.open(uploaded_model))
-            
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            
-            # Build dynamic scene template berdasarkan jumlah scene
-            scene_blocks = []
-            for i in range(1, scene_count + 1):
-                if i == 1:
-                    scene_role = "OPENING HOOK — Tarik perhatian dalam 1 detik pertama"
-                elif i == scene_count:
-                    scene_role = f"KLIMAKS & CTA — Tampilkan produk + ajak audiens '{cta_goal}'"
-                elif i == scene_count - 1:
-                    scene_role = "PUNCAK EMOSI — Tunjukkan keunggulan/manfaat utama produk"
-                else:
-                    scene_role = "BUILD UP — Bangun cerita & desire"
-                
-                scene_blocks.append(f"""
-## 🎬 SCENE {i}: [Nama Scene] ({scene_dur})
-**🎯 Peran Scene:** {scene_role}
-**👁️ DESKRIPSI VISUAL:** [Setting di {location_desc}, kostum {wardrobe_desc}, sinematografi gaya Arri Alexa]
-**📸 PROMPT GAMBAR:** ```text
-[Cinematic shot, EXACT product from reference, Setting: {location_desc}, Wardrobe: {wardrobe_desc}, lighting & mood] {ar_param} --v 6.0
-```
-**🎥 PROMPT VIDEO:** ```text
-[Camera movement, action, Setting: {location_desc}, Wardrobe details, Product placement, duration {scene_dur}]
-```
-**🎙️ ELEMEN AUDIO:**
-- VO ({lang_style}): "[Kalimat voice over yang nyambung dengan scene sebelum & sesudah]"
-- SFX: [Sound effect spesifik]
-- Musik: [Mood musik — HARUS konsisten dengan scene lain]
-""")
-            
-            scene_template = "\n---\n".join(scene_blocks)
-            
-            # MASTER PROMPT
-            master_prompt = f"""
-Anda adalah Sutradara TVC & Creative Director High-End yang spesialis branding UMKM Indonesia.
-Tugas: Buat storyboard iklan TVC sinematik {duration} ({scene_count} scene) rasio {format_video} untuk produk '{prod_name}'.
 
-=== BRIEF ===
+            model_gemini = genai.GenerativeModel('gemini-2.5-flash')
+
+            master_prompt = f"""
+Anda adalah Sutradara TVC & Creative Director kelas internasional yang spesialis dalam branding UMKM Indonesia.
+Misi Anda: Menghasilkan storyboard iklan TVC sinematik {duration} ({scene_count} scene, rasio {format_video}) untuk produk '{prod_name}'.
+Setiap kata yang Anda tulis adalah instruksi produksi nyata. Tidak ada ruang untuk kemalasan kreatif.
+
+=== CREATIVE BRIEF ===
+- PRODUK: {prod_name}
 - KATEGORI: {category}
-- TONE: {tone_style}
-- LOKASI: {location_desc}
-- WARDROBE: {wardrobe_desc}
+- TONE IKLAN: {tone_style}
+- LOKASI SYUTING: {location_desc}
+- WARDROBE MODEL: {wardrobe_label}
 - BAHASA VO: {lang_style}
 - MOOD MUSIK: {music_mood}
-- CTA: {cta_goal}
-- CERITA & KEUNGGULAN PRODUK: {details}
+- CTA (Tujuan Iklan): {cta_goal}
+- CERITA & KEUNGGULAN: {details}
 
-=== TALENT ===
-{talent_desc}
+=== REFERENSI VISUAL ===
+- Image 1 = Foto produk '{prod_name}' (product reference — warna, kemasan, label, tekstur HARUS dipertahankan identik)
+{"- Image 2 = Foto talent/model (character reference — wajah, kulit, rambut HARUS identik di semua scene)" if uploaded_model else f"- Tidak ada Image 2 — generate model: {talent_gender}, {talent_age}, {talent_ethnicity}"}
 
-=== ATURAN WAJIB (NON-NEGOTIABLE) ===
-1. **KONSISTENSI LOKASI:** Semua {scene_count} scene WAJIB di '{location_desc}'. Variasi sudut kamera & komposisi, BUKAN ganti lokasi.
-2. **KONSISTENSI TALENT:** Wajah & pakaian model HARUS sama di semua scene.
-3. **KONSISTENSI VO (PENTING):** Voice over di setiap scene harus mengalir jadi 1 narasi utuh — kalimat scene 1 menyambung ke scene 2, dst. Bukan VO terpisah-pisah, tapi 1 cerita yang dipotong per scene. Tone & gaya bahasa harus konsisten dari awal sampai akhir.
-4. **KONSISTENSI MUSIK (PENTING):** Mood musik bertahan SAMA dari scene 1 sampai scene {scene_count}. Boleh build-up dinamika (intro → klimaks), tapi DNA musik tetap satu (genre, instrumen utama, tempo).
-5. **CTA EKSPLISIT:** Scene terakhir WAJIB ada visual + VO yang mengajak '{cta_goal}'. Tampilkan elemen visual jelas (logo WhatsApp, handle IG, alamat, dll).
-6. **ANTI-HALU PRODUK:** Bentuk, warna, tekstur, kemasan produk WAJIB IDENTIK dengan Gambar 1 referensi. Jangan bikin variasi/imajinasi produk.
-7. **BAHASA UMKM-FRIENDLY:** Pesan iklan harus relate ke audiens lokal/Indonesia, jangan terlalu corporate/jargon. Tetap elegan, tapi grounded.
+=== WARDROBE LOCK (NON-NEGOTIABLE) ===
+Model WAJIB mengenakan **{wardrobe_for_prompt}** di SETIAP scene tanpa pengecualian.
+Tulis deskripsi pakaian ini secara LENGKAP dan EKSPLISIT di setiap prompt gambar dan video.
+Jangan pernah tulis hanya "same wardrobe" — selalu tulis deskripsi lengkapnya.
 
-=== FORMAT OUTPUT (IKUTI PERSIS) ===
+=== 8 ATURAN KONSISTENSI WAJIB (SEMUA HARUS DIPATUHI) ===
+1. KONSISTENSI LOKASI: Semua {scene_count} scene di '{location_desc}'. Variasi sudut kamera boleh, GANTI lokasi TIDAK BOLEH.
+2. KONSISTENSI WAJAH TALENT: Wajah model HARUS IDENTIK lintas semua scene. Tulis instruksi ini eksplisit di setiap prompt.
+3. KONSISTENSI WARDROBE: Pakaian model HARUS IDENTIK lintas semua scene. Tulis deskripsi lengkap pakaian di setiap prompt gambar dan video.
+4. KONSISTENSI PRODUK: Bentuk, warna, kemasan, label {prod_name} HARUS IDENTIK dengan Image 1. Jangan imajinasikan variasi.
+5. KONSISTENSI VO (NARASI UTUH): VO dari scene 1 sampai {scene_count} adalah SATU narasi yang dipotong per scene. Kalimat harus mengalir dan bersambung, bukan kalimat-kalimat terpisah.
+6. KONSISTENSI MUSIK: Genre, instrumen utama, dan tempo musik SAMA dari scene 1 sampai {scene_count}. Dinamika boleh build-up, tapi DNA musik tidak boleh berubah.
+7. PROMPT GAMBAR HARUS SPESIFIK: Setiap prompt gambar WAJIB menyebutkan: (a) jenis shot, (b) deskripsi fisik produk dari Image 1, (c) deskripsi lengkap wardrobe, (d) aksi spesifik scene, (e) referensi ke Image 1 dan Image 2.
+8. PROMPT VIDEO HARUS EXECUTABLE: Prompt video harus bisa langsung dipakai di Kling/Runway. Sertakan: gerakan kamera, aksi talent, posisi produk, durasi, dan color grade reference.
+
+=== FORMAT OUTPUT WAJIB (IKUTI PERSIS — JANGAN TAMBAH/KURANGI SECTION) ===
 
 ## 🎯 BIG IDEA & TAGLINE
-- **Big Idea:** [Konsep utama dalam 1 kalimat]
-- **Tagline:** [Tagline catchy max 7 kata]
+- **Big Idea:** [1 kalimat konsep utama yang jadi jiwa seluruh iklan]
+- **Tagline:** [Maks 7 kata, memorable, relevan dengan {prod_name} dan {tone_style}]
 
 ## 🔍 PRODUCTION PLAN
-- **Analisis Produk:** [Detail fisik dari foto referensi]
-- **Location & Mood:** [Bagaimana {location_desc} dipakai sinematik]
-- **Master Wardrobe & Talent:** [Deskripsi yang konsisten lintas scene]
-- **Color Palette:** [3-5 warna dominan + hex code, contoh #1c1917]
-- **🎵 Music & VO Continuity:** [Penjelasan benang merah audio dari scene 1 sampai {scene_count}: bagaimana musik berkembang & bagaimana VO mengalir jadi 1 narasi]
 
----
+### Analisis Produk dari Image 1
+[Deskripsikan DETAIL fisik produk dari foto: warna, tekstur, kemasan, label, ukuran relatif, kondisi. Ini akan jadi anchor semua prompt.]
+
+### Location & Cinematography Blueprint
+[Bagaimana {location_desc} dieksekusi secara sinematik: sudut, pencahayaan, props yang digunakan, bagaimana variasi antar scene dicapai tanpa ganti lokasi]
+
+### Master Character & Wardrobe Lock
+[Deskripsi LENGKAP talent dan wardrobe yang akan KONSISTEN di semua {scene_count} scene. Ini adalah "bible" yang harus dipatuhi setiap prompt.]
+- **Wajah & Fisik:** [dari Image 2 atau deskripsi AI-generated]
+- **Pakaian Atas:** [detail spesifik]
+- **Pakaian Bawah:** [detail spesifik]
+- **Aksesori:** [jika ada]
+- **Rambut & Grooming:** [spesifik]
+
+### Color Palette
+[5 warna dominan dengan hex code, contoh #FFC107, dan keterangan penggunaannya]
+
+### 🎵 Audio & VO Master Plan
+- **Musik:** [Nama genre spesifik, instrumen utama, BPM range, referensi artis/lagu jika ada, bagaimana berkembang dari scene 1 ke {scene_count}]
+- **VO Flow:** [Tulis FULL narasi VO dari scene 1 sampai {scene_count} sebagai 1 paragraf utuh — ini adalah "script bible" VO sebelum dipotong per scene]
+
 {scene_template}
 
 ---
+
 ## 📱 CAMPAIGN KIT
 
 ### Caption Instagram/TikTok
-[Caption lengkap dengan hook (1-2 baris pertama harus menjebak), body, CTA, max 150 kata]
+[Caption lengkap: baris 1-2 adalah HOOK yang memaksa orang berhenti scroll, lanjutkan dengan body cerita, tutup dengan CTA '{cta_goal}'. Maks 150 kata. Gunakan gaya bahasa {lang_style}.]
 
 ### Hashtag Strategy
-[10-15 hashtag mix: branded (nama produk) + kategori + lokal Lampung/Indonesia. Pisah jadi tier: high-volume, mid-volume, niche]
+**Tier 1 — High Volume (5 hashtag):** [hashtag umum dengan jutaan postingan]
+**Tier 2 — Mid Volume (5 hashtag):** [hashtag kategori dengan ratusan ribu postingan]
+**Tier 3 — Niche/Branded (5 hashtag):** [hashtag unik produk + lokal Lampung/Indonesia]
 
-### 🎙️ Voice Over Script (Final — Untuk Talent)
-[Compile semua VO dari scene 1 sampai {scene_count} jadi 1 script bersih tanpa direction visual. Format: per baris dengan timing. Siap rekam.]
+### 🎙️ Voice Over Script Final (Siap Rekam)
+[Compile semua VO jadi 1 script bersih dengan timing per scene. Format untuk talent rekam langsung.]
 
-### 💰 Tips Produksi Hemat untuk UMKM
-[3 tips eksekusi murah meriah — kreatif, tapi ga butuh budget agency]
+(0:00 - Scene 1) "[VO scene 1]"
+[dst sesuai jumlah scene]
+
+### 💰 3 Tips Produksi Hemat UMKM
+[Tips eksekusi murah tapi hasilnya setara agency — spesifik, actionable, relevan dengan {location_desc} dan {tone_style}]
 """
-            
-            res = model.generate_content([master_prompt] + image_parts)
+
+            res = model_gemini.generate_content([master_prompt] + image_parts)
             st.session_state.last_result = res.text
             st.session_state.last_prod_name = prod_name
             st.balloons()
-            
+
         except Exception as e:
             st.error(f"⚠️ Kendala teknis: {e}")
             st.stop()
 
 # ============================================
-# 10. DISPLAY HASIL (PERSIST VIA SESSION STATE)
+# 10. DISPLAY HASIL
 # ============================================
 if st.session_state.last_result:
     st.divider()
-    st.markdown(st.session_state.last_result)
+
+    # ---- PARSING & DISPLAY DENGAN TOMBOL COPY ----
+    result_text = st.session_state.last_result
+    lines = result_text.split('\n')
+
+    # Render hasil dengan tombol copy untuk setiap blok kode prompt
+    current_block = []
+    in_code_block = False
+    code_lang = ""
+    prompt_count = 0
+
+    for line in lines:
+        stripped = line.strip()
+
+        if stripped.startswith("```") and not in_code_block:
+            # Flush accumulated non-code text
+            if current_block:
+                st.markdown('\n'.join(current_block))
+                current_block = []
+            in_code_block = True
+            code_lang = stripped[3:].strip()
+
+        elif stripped == "```" and in_code_block:
+            # End of code block — render with copy button
+            in_code_block = False
+            prompt_count += 1
+            prompt_text = '\n'.join(current_block)
+            current_block = []
+
+            # Determine label
+            if prompt_count % 2 == 1:
+                label = "📸 Prompt Gambar"
+                label_color = "#d97706"
+            else:
+                label = "🎥 Prompt Video"
+                label_color = "#2563eb"
+
+            st.markdown(
+                f"<div style='font-size:11px; font-weight:700; letter-spacing:1px; "
+                f"text-transform:uppercase; color:{label_color}; margin-bottom:4px;'>"
+                f"{label}</div>",
+                unsafe_allow_html=True
+            )
+            st.code(prompt_text, language=None)
+
+        elif in_code_block:
+            current_block.append(line)
+        else:
+            current_block.append(line)
+
+    # Flush any remaining text
+    if current_block:
+        st.markdown('\n'.join(current_block))
+
     st.divider()
-    
+
+    # ---- DOWNLOAD & RESET ----
     dl1, dl2 = st.columns(2)
     with dl1:
         st.download_button(
