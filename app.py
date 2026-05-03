@@ -5,7 +5,7 @@ from PIL import Image
 # 1. Konfigurasi Halaman (Layout Boutique)
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
-# 2. CSS TOBAT NASUHA
+# 2. CSS TOBAT NASUHA (Premium UI)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
@@ -45,6 +45,20 @@ st.markdown("""
         border: 1px solid #d4af37 !important;
     }
 
+    /* Style untuk Tabs Streamlit agar terlihat lebih premium */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 4px 4px 0px 0px;
+        padding: 10px 16px;
+        background-color: #f5f5f4;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #1c1917 !important;
+        color: white !important;
+    }
+
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
@@ -71,7 +85,7 @@ else:
 
 # 4. Header
 st.markdown("<h1 class='main-title'>Mamikiaypuansunan Berceritera</h1>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>DIRECTOR'S CUT & CAMPAIGN KIT</div>", unsafe_allow_html=True)
 
 # 5. Form Input
 st.markdown("### 📸 Visual Produk")
@@ -100,7 +114,6 @@ with c1:
     ]
     category_select = st.selectbox("Klasifikasi Produk", kategori_pilihan)
     
-    # Logika UX: Input manual jika pilih "Lainnya"
     if category_select == "Lainnya (Ketik Manual)":
         category = st.text_input("Ketik Kategori Spesifik", placeholder="Misal: Elektronik, Jasa, dll.")
     else:
@@ -145,7 +158,7 @@ if generate:
     elif category_select == "Lainnya (Ketik Manual)" and not category:
         st.warning("🚨 Mohon ketikkan Kategori Spesifik produk Anda.")
     else:
-        with st.spinner(f"📜 Merajut mahakarya {category} dengan tone {tone_style}..."):
+        with st.spinner(f"📜 Menyusun Mahakarya TVC & Social Media Kit untuk {category}..."):
             try:
                 # Setup Auto Parameter Midjourney
                 ar_param = "--ar 9:16"
@@ -159,66 +172,110 @@ if generate:
 
                 model = genai.GenerativeModel('gemini-2.5-flash')
                 
-                # --- PROMPT VERSION: THE ULTIMATE MASTERPIECE ---
+                # --- PROMPT VERSION: THE DIRECTOR + UI PARSER ---
                 master_prompt = f"""
-                Anda adalah Creative Director, Ahli Analisis Visual, & Copywriter Kelas Dunia.
-                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk mahakarya '{prod_name}'.
+                Anda adalah Sutradara Iklan TV Komersial Kelas Dunia (sekelas sutradara iklan Apple, otomotif mewah) & Copywriter Elite.
+                Tugas: Buat storyboard iklan TV {duration} rasio {format_video} untuk mahakarya '{prod_name}'.
                 
                 KATEGORI: {category}.
                 GAYA VISUAL: {tone_style}. 
                 GAYA BAHASA: {lang_style}.
                 MODEL: {model_type}.
 
-                ATURAN HARGA MATI (GAMBAR REFERENSI ADALAH HUKUM TERTINGGI):
-                1. ANALISIS WAJIB: Anda WAJIB menganalisis gambar referensi yang telah dilampirkan. Segala bentuk halusinasi visual yang bertentangan dengan gambar ini DILARANG KERAS.
-                2. BENTUK FISIK: Deskripsikan bentuk asli produk dengan presisi (misal: jika keripik diiris memanjang, tulis "long lengthwise sliced"). JANGAN MENGARANG bentuk jika tidak sesuai gambar.
-                3. BRANDING KEMASAN: Replikasi 100% detail teks, warna, dan logo pada kemasan persis seperti gambar di scene akhir.
-                4. KONSISTENSI: Di setiap prompt bahasa Inggris, WAJIB sertakan instruksi: "Exactly matching the provided reference image".
+                ATURAN SINEMATOGRAFI KELAS DUNIA (WAJIB DITERAPKAN DI SEMUA TONE):
+                - Visual "Iklan Mahal": Seluruh scene APAPUN tone-nya HARUS memancarkan aura iklan berbiaya miliaran rupiah.
+                - Kamera & Lighting: Di prompt bahasa Inggris, WAJIB gunakan istilah alat berat Hollywood ("Shot on Arri Alexa 65", "Phantom Flex 4k", "Laowa Probe Lens", "cinematic chiaroscuro").
+                - Naskah (VO): Walaupun memilih gaya bahasa kasual, eksekusinya harus tetap tajam, eksklusif, dan elegan layaknya iklan TV nasional.
 
-                ATURAN TEKNIS LENGKAP:
-                - Durasi: TEPAT 5 detik per Scene. (15s = 3 Scene, 30s = 6 Scene).
-                - Kamera: Wajib ada instruksi Lensa, Angle, dan Pergerakan 5 detik.
-                - Naskah (VO): Sesuaikan nada bicara dengan {lang_style}. Jangan puitis jika klien meminta kasual/fun.
-                - Format Teks: PROMPT GAMBAR, VIDEO, DAN MUSIK WAJIB dibungkus dalam blok kode Markdown (```text ... ```) agar mudah di-copy klien.
+                ATURAN HARGA MATI (ANTI-HALU GAMBAR):
+                1. ANALISIS WAJIB: Anda WAJIB menganalisis gambar referensi. BENTUK FISIK: Deskripsikan bentuk asli produk dengan presisi (misal: jika keripik diiris memanjang, tulis "long lengthwise sliced"). JANGAN MENGARANG bentuk.
+                2. BRANDING: Replikasi 100% detail teks, warna, dan logo pada kemasan persis seperti gambar.
+                3. KONSISTENSI: Di setiap prompt bahasa Inggris, WAJIB sertakan instruksi: "Exactly matching the provided reference image".
 
-                FORMAT OUTPUT (WAJIB PER SCENE):
-                ---
-                🔍 ANALISIS VISUAL REFERENSI (Sebutkan di awal saja):
-                [Sebutkan dengan detail bentuk fisik produk dan detail kemasan dari gambar referensi agar Anda tidak berhalusinasi di langkah selanjutnya].
+                ATURAN UI (SANGAT PENTING):
+                Anda WAJIB menggunakan pemisah teks yaitu `[BATAS_TAB]` sebelum setiap bagian utama agar sistem kami bisa memotongnya menjadi Tab UI.
 
-                🎬 SCENE [Nomor]: [Nama Scene] (5 detik)
+                FORMAT OUTPUT (WAJIB IKUTI PEMISAH INI):
 
-                👁️ DESKRIPSI VISUAL (Bahasa Indonesia):
-                [Detail komposisi, interaksi model, dan nuansa {tone_style} yang 100% konsisten dengan gambar referensi].
+                [BATAS_TAB]
+                🔍 ANALISIS VISUAL REFERENSI:
+                [Detail analisis akurat bentuk fisik dan kemasan dari gambar referensi]
 
-                📸 PROMPT GAMBAR (English - Midjourney Style):
+                [BATAS_TAB]
+                🎬 SCENE 1: [Nama Scene] (5 detik)
+                👁️ DESKRIPSI VISUAL: [Komposisi sinematik]
+                📸 PROMPT GAMBAR: 
                 ```text
-                [High-detail static prompt. MUST explicitly describe the accurate physical shape and EXACT branding. INCLUDE: "Exactly matching the provided reference image in shape, color, and branding."] {ar_param} --style raw --v 6.0
+                [Cinematic photography. High-end lighting/camera. EXACT physical shape & branding. INCLUDE: "Exactly matching the provided reference image."] {ar_param} --style raw --v 6.0
+                ```
+                🎥 PROMPT VIDEO: 
+                ```text
+                [EXACT product shape + High-end Camera Angle + 5-sec Camera Movement. INCLUDE: "Product and packaging must be identical to the uploaded reference image."]
+                ```
+                🎙️ ELEMEN AUDIO: [Naskah VO kelas atas sesuai {lang_style}] & [SFX/Musik taktil sesuai {tone_style}]
+                🎵 PROMPT MUSIK AI: 
+                ```text
+                [Genre, tempo, mood for a high-budget commercial]
                 ```
 
-                🎥 PROMPT VIDEO ALL-IN-ONE (English - Kling Style):
-                ```text
-                [Self-contained paragraph. Describe EXACT product shape/packaging + Camera Angle + 5-second Camera Movement + Audio SFX & Music. INCLUDE: "Product and packaging must be identical to the uploaded reference image."]
-                ```
+                [BATAS_TAB]
+                🎬 SCENE 2: [Nama Scene] (5 detik)
+                (Lanjutkan format scene di sini...)
 
-                🎙️ ELEMEN AUDIO & TEKS ({lang_style}):
-                - Voice Over (VO): "[Naskah sesuai {lang_style}]"
-                - SFX & Musik: "[Efek suara taktil & instrumen sesuai {tone_style}]"
-                - On-Screen Text & Posisi: "[Teks estetik dan saran letaknya]"
-                
-                🎵 PROMPT MUSIK AI (English - Suno/Udio Ready):
-                ```text
-                [Genre, tempo, mood, and instrumentation matching {tone_style} and {category}]
-                ```
-                ---
+                [BATAS_TAB]
+                🎬 SCENE 3: [Nama Scene] (5 detik)
+                (Lanjutkan format scene di sini...)
+
+                [BATAS_TAB]
+                📱 CAMPAIGN KIT & SOCIAL MEDIA
+                - Caption Media Sosial: "[Buat caption yang menjual dan elegan sesuai {lang_style}]"
+                - Hashtags Premium: "[5 Hashtag]"
                 """
                 res = model.generate_content([master_prompt] + image_parts)
+                
+                # --- LOGIKA PARSING TABS ---
+                raw_text = res.text
+                # Memotong teks berdasarkan pemisah ajaib
+                sections = [s.strip() for s in raw_text.split("[BATAS_TAB]") if s.strip()]
+                
                 st.balloons()
+                st.markdown(f"### 🎞️ Mahakarya Selesai: {tone_style} | {lang_style}")
                 
-                st.markdown(f"### 🎞️ Hasil Racikan: {tone_style} | {lang_style}")
-                st.markdown(res.text)
+                if len(sections) > 1:
+                    # Membuat nama tab dinamis berdasarkan isi section
+                    tab_titles = []
+                    for s in sections:
+                        if "ANALISIS" in s.upper()[:100]:
+                            tab_titles.append("🔍 Analisis")
+                        elif "SCENE 1" in s.upper()[:100]:
+                            tab_titles.append("🎬 Scene 1")
+                        elif "SCENE 2" in s.upper()[:100]:
+                            tab_titles.append("🎬 Scene 2")
+                        elif "SCENE 3" in s.upper()[:100]:
+                            tab_titles.append("🎬 Scene 3")
+                        elif "SCENE 4" in s.upper()[:100]:
+                            tab_titles.append("🎬 Scene 4")
+                        elif "SCENE 5" in s.upper()[:100]:
+                            tab_titles.append("🎬 Scene 5")
+                        elif "SCENE 6" in s.upper()[:100]:
+                            tab_titles.append("🎬 Scene 6")
+                        elif "CAMPAIGN" in s.upper()[:100]:
+                            tab_titles.append("📱 Campaign Kit")
+                        else:
+                            tab_titles.append("✨ Bagian")
+                            
+                    # Render UI Tabs
+                    tabs = st.tabs(tab_titles)
+                    for i, tab in enumerate(tabs):
+                        with tab:
+                            st.markdown(sections[i])
+                else:
+                    # Fallback jika AI lupa kasih pemisah
+                    st.markdown(raw_text)
                 
-                st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt", use_container_width=True)
+                # Menggunakan format .md (Markdown) untuk file download agar format bold/code block aman
+                st.download_button("Simpan Proposal (.MD)", raw_text.replace("[BATAS_TAB]", "\n\n---\n\n"), file_name=f"Director_Treatment_{prod_name}.md", use_container_width=True)
+            
             except Exception as e:
                 st.error(f"Terjadi kendala teknis: {e}")
 
