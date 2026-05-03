@@ -498,7 +498,7 @@ if generate:
 
 **📸 PROMPT GAMBAR — copy langsung ke Midjourney / Flux / Leonardo:**
 ```
-[SHOT TYPE: contoh Cinematic medium shot / extreme close-up / wide establishing shot], EXACT product appearance from Image 1 ({prod_name} — [AI: deskripsikan kemasan/warna/bentuk/label persis dari Image 1]), {talent_anchor}, setting: {location_desc}, [AKSI SPESIFIK SCENE INI], [MOOD PENCAHAYAAN sesuai tone {tone_style}], shallow depth of field, warm bokeh, Arri Alexa color science, professional cinematography {ar_param} --v 6.0
+[SHOT TYPE: contoh Cinematic medium shot / extreme close-up / wide establishing shot], EXACT product appearance from Image 1 ({prod_name} — [AI: deskripsikan kemasan/warna/bentuk/label persis dari Image 1]), {talent_anchor} Setting: {location_desc}. [AKSI SPESIFIK SCENE INI — deskripsikan gerakan, ekspresi mikro, posisi produk]. [MOOD PENCAHAYAAN spesifik sesuai tone {tone_style}]. Shallow depth of field, warm bokeh, Arri Alexa color science, professional cinematography {ar_param} --v 6.0
 ```
 
 **🎥 PROMPT VIDEO — copy langsung ke Kling AI / Runway / Hailuo:**
@@ -526,9 +526,12 @@ if generate:
             model_gemini = genai.GenerativeModel('gemini-2.5-flash')
 
             master_prompt = f"""
-Anda adalah Sutradara TVC & Creative Director kelas internasional yang spesialis dalam branding UMKM Indonesia.
-Misi Anda: Menghasilkan storyboard iklan TVC sinematik {duration} ({scene_count} scene, rasio {format_video}) untuk produk '{prod_name}'.
-Setiap kata yang Anda tulis adalah instruksi produksi nyata. Tidak ada ruang untuk kemalasan kreatif.
+Anda adalah Sutradara TVC kelas dunia dan Chief Creative Officer yang telah mengerjakan iklan untuk brand-brand besar Asia Tenggara.
+Kali ini misi Anda adalah sesuatu yang lebih bermakna: mengangkat UMKM Indonesia '{prod_name}' ke layar dengan iklan {duration} yang terasa mahal, emosional, dan tak terlupakan.
+
+Standar Anda adalah iklan TV yang membuat orang BERHENTI — bukan karena produknya, tapi karena PERASAAN yang ditimbulkan.
+Referensi jiwa: iklan Aqua yang bikin orang rindu perjalanan, iklan Indomie yang bikin rindu rumah, iklan Walls yang bikin senyum sendiri.
+Mereka tidak menjual produk. Mereka menjual momen manusia yang universal.
 
 === CREATIVE BRIEF ===
 - PRODUK: {prod_name}
@@ -539,7 +542,7 @@ Setiap kata yang Anda tulis adalah instruksi produksi nyata. Tidak ada ruang unt
 - BAHASA VO: {lang_style}
 - MOOD MUSIK: {music_mood}
 - CTA (Tujuan Iklan): {cta_goal}
-- CERITA & KEUNGGULAN: {details}
+- CERITA & KEUNGGULAN PRODUK: {details}
 
 === REFERENSI VISUAL ===
 - Image 1 = Foto produk '{prod_name}' (product reference — warna, kemasan, label, tekstur HARUS dipertahankan identik)
@@ -550,44 +553,87 @@ Model WAJIB mengenakan **{wardrobe_for_prompt}** di SETIAP scene tanpa pengecual
 Tulis deskripsi pakaian ini secara LENGKAP dan EKSPLISIT di setiap prompt gambar dan video.
 Jangan pernah tulis hanya "same wardrobe" — selalu tulis deskripsi lengkapnya.
 
-=== 8 ATURAN KONSISTENSI WAJIB (SEMUA HARUS DIPATUHI) ===
+=== FILOSOFI IKLAN TV MAHAL — WAJIB DIPAHAMI SEBELUM MENULIS ===
+
+**1. JANGAN PERNAH SEBUT HARGA ATAU KATA "MURAH/MAHAL" DALAM VO**
+Iklan Indomie tidak pernah bilang "murah". Iklan Aqua tidak pernah bilang "terjangkau".
+VO yang menyebut harga = iklan pasar, bukan iklan TV. Harga adalah urusan toko, bukan urusan cerita.
+
+**2. JUAL PERASAAN, BUKAN PRODUK**
+Produk adalah kendaraan. Perasaan adalah tujuannya.
+Tanyakan: momen manusia apa yang diwakili oleh {prod_name}? Kebersamaan? Istirahat sejenak? Menemukan kejutan kecil yang membahagiakan?
+Bangun cerita di sekitar perasaan itu. Produk hadir sebagai solusi yang natural, bukan dijual secara frontal.
+
+**3. SATU SIGNATURE MOMENT — SATU GAMBAR YANG ORANG INGAT SEUMUR HIDUP**
+Setiap iklan TV mahal punya 1 frame ikonik: kilau cahaya dari botol Coca-Cola, uap nasi dari Indomie, tawa anak kecil di iklan susu.
+Tentukan 1 SIGNATURE MOMENT visual untuk iklan ini — momen spesifik yang hanya bisa ada di {prod_name} — dan jadikan puncak visual iklan.
+Deskripsikan momen ini secara sinematik dengan sangat detail dalam storyboard.
+
+**4. STRUKTUR EMOSI: TENSION → RELEASE → DESIRE**
+Ini bukan struktur "tanya-jawab-pegang produk". Ini struktur emosi:
+- TENSION: Ciptakan rasa yang relate — situasi, perasaan, atau momen yang penonton KENALI dari hidup mereka sendiri.
+- RELEASE: Produk hadir bukan sebagai solusi iklan, tapi sebagai momen kelegaan yang natural dan hangat.
+- DESIRE: Penonton tidak ingin MEMBELI produk — mereka ingin MERASAKAN momen itu. Pembelian adalah konsekuensi alamiah.
+
+**5. VO ADALAH PUISI, BUKAN DESKRIPSI**
+VO iklan mahal tidak menjelaskan produk. VO berbicara tentang perasaan manusia.
+Hindari: "Keripik pisang ini renyah dan enak." (deskripsi)
+Gunakan: "Ada momen-momen kecil yang diam-diam jadi favorit." (puisi manusia)
+VO harus bisa dibacakan tanpa gambar dan tetap terasa bermakna.
+Gaya bahasa wajib mengikuti input: {lang_style}.
+
+**6. SINEMATOGRAFI: DETAIL YANG BERBICARA**
+Iklan mahal tidak hanya "wide shot talent pegang produk". Mereka memperhatikan:
+- Cahaya yang jatuh di sudut yang tepat pada produk
+- Gerakan tangan yang lambat dan penuh makna
+- Ekspresi mikro wajah talent — bukan senyum besar, tapi senyum tipis yang jujur
+- Sound design yang imersif: suara lingkungan, detail SFX produk, musik yang bernapas
+
+=== 8 ATURAN KONSISTENSI TEKNIS (NON-NEGOTIABLE) ===
 1. KONSISTENSI LOKASI: Semua {scene_count} scene di '{location_desc}'. Variasi sudut kamera boleh, GANTI lokasi TIDAK BOLEH.
 2. KONSISTENSI WAJAH TALENT: Wajah model HARUS IDENTIK lintas semua scene. Tulis instruksi ini eksplisit di setiap prompt.
-3. KONSISTENSI WARDROBE: Pakaian model HARUS IDENTIK lintas semua scene. Tulis deskripsi lengkap pakaian di setiap prompt gambar dan video.
+3. KONSISTENSI WARDROBE: Pakaian model HARUS IDENTIK lintas semua scene. Tulis deskripsi LENGKAP pakaian di setiap prompt gambar dan video — jangan disingkat.
 4. KONSISTENSI PRODUK: Bentuk, warna, kemasan, label {prod_name} HARUS IDENTIK dengan Image 1. Jangan imajinasikan variasi.
-5. KONSISTENSI VO (NARASI UTUH): VO dari scene 1 sampai {scene_count} adalah SATU narasi yang dipotong per scene. Kalimat harus mengalir dan bersambung, bukan kalimat-kalimat terpisah.
-6. KONSISTENSI MUSIK: Genre, instrumen utama, dan tempo musik SAMA dari scene 1 sampai {scene_count}. Dinamika boleh build-up, tapi DNA musik tidak boleh berubah.
-7. PROMPT GAMBAR HARUS SPESIFIK: Setiap prompt gambar WAJIB menyebutkan: (a) jenis shot, (b) deskripsi fisik produk dari Image 1, (c) deskripsi lengkap wardrobe, (d) aksi spesifik scene, (e) referensi ke Image 1 dan Image 2.
-8. PROMPT VIDEO HARUS EXECUTABLE: Prompt video harus bisa langsung dipakai di Kling/Runway. Sertakan: gerakan kamera, aksi talent, posisi produk, durasi, dan color grade reference.
+5. KONSISTENSI VO (NARASI UTUH): VO adalah SATU narasi puitis yang dipotong per scene. Kalimat mengalir dan bersambung — bukan kalimat berdiri sendiri. Tidak ada satu pun kalimat VO yang menyebut harga.
+6. KONSISTENSI MUSIK: Genre, instrumen utama, dan tempo SAMA dari scene 1 sampai {scene_count}. Dinamika boleh build-up, DNA musik tidak boleh berubah.
+7. PROMPT GAMBAR HARUS SPESIFIK: Setiap prompt gambar WAJIB menyebutkan: (a) jenis shot sinematik, (b) deskripsi fisik produk dari Image 1, (c) deskripsi lengkap wardrobe, (d) aksi & ekspresi spesifik scene, (e) kualitas pencahayaan & mood.
+8. PROMPT VIDEO HARUS EXECUTABLE: Prompt video harus langsung bisa dipakai di Kling/Runway. Sertakan: gerakan kamera spesifik, aksi talent frame-by-frame, posisi produk, durasi, sound cue, dan color grade reference.
 
 === FORMAT OUTPUT WAJIB (IKUTI PERSIS — JANGAN TAMBAH/KURANGI SECTION) ===
 
 ## 🎯 BIG IDEA & TAGLINE
-- **Big Idea:** [1 kalimat konsep utama yang jadi jiwa seluruh iklan]
-- **Tagline:** [Maks 7 kata, memorable, relevan dengan {prod_name} dan {tone_style}]
+- **Big Idea:** [1 kalimat — BUKAN deskripsi produk, tapi PERASAAN MANUSIA yang menjadi jiwa iklan ini. Contoh bukan: "Keripik pisang yang enak dan murah." Contoh ya: "Momen kecil yang diam-diam jadi bagian terbaik hari ini."]
+- **Tagline:** [Maks 7 kata. Poetic, memorable, tanpa kata harga. Harus bisa hidup sendiri tanpa konteks produk.]
+- **Signature Moment:** [Deskripsikan 1 frame ikonik dari iklan ini — momen visual spesifik yang hanya bisa ada di {prod_name} dan akan diingat penonton selamanya. Ini adalah puncak visual iklan.]
 
 ## 🔍 PRODUCTION PLAN
 
 ### Analisis Produk dari Image 1
 [Deskripsikan DETAIL fisik produk dari foto: warna, tekstur, kemasan, label, ukuran relatif, kondisi. Ini akan jadi anchor semua prompt.]
 
+### Emotional Story Arc — {scene_count} Scene
+[Jelaskan arc emosi keseluruhan iklan: apa TENSION-nya, bagaimana RELEASE-nya, bagaimana DESIRE diciptakan. Ini bukan sinopsis scene, tapi blueprint emosi yang mengalir dari scene 1 ke {scene_count}.]
+
 ### Location & Cinematography Blueprint
-[Bagaimana {location_desc} dieksekusi secara sinematik: sudut, pencahayaan, props yang digunakan, bagaimana variasi antar scene dicapai tanpa ganti lokasi]
+[Bagaimana {location_desc} dieksekusi secara sinematik: sudut, pencahayaan, props yang digunakan, bagaimana Signature Moment dieksekusi secara visual]
 
 ### Master Character & Wardrobe Lock
-[Deskripsi LENGKAP talent dan wardrobe yang akan KONSISTEN di semua {scene_count} scene. Ini adalah "bible" yang harus dipatuhi setiap prompt.]
+[Deskripsi LENGKAP talent dan wardrobe yang akan KONSISTEN di semua {scene_count} scene.]
 - **Wajah & Fisik:** [dari Image 2 atau deskripsi AI-generated]
-- **Pakaian Atas:** [detail spesifik]
+- **Pakaian Atas:** [detail spesifik — warna, bahan, potongan]
 - **Pakaian Bawah:** [detail spesifik]
 - **Aksesori:** [jika ada]
 - **Rambut & Grooming:** [spesifik]
+- **Ekspresi Khas:** [bagaimana ekspresi talent yang KONSISTEN — bukan senyum besar iklan, tapi nuansa emosi yang jujur]
 
 ### Color Palette
-[5 warna dominan dengan hex code, contoh #FFC107, dan keterangan penggunaannya]
+[5 warna dominan dengan hex code dan keterangan penggunaannya — harus mendukung tone {tone_style}]
 
 ### 🎵 Audio & VO Master Plan
-- **Musik:** [Nama genre spesifik, instrumen utama, BPM range, referensi artis/lagu jika ada, bagaimana berkembang dari scene 1 ke {scene_count}]
-- **VO Flow:** [Tulis FULL narasi VO dari scene 1 sampai {scene_count} sebagai 1 paragraf utuh — ini adalah "script bible" VO sebelum dipotong per scene]
+- **Musik:** [Genre spesifik, instrumen utama, BPM, mood per scene, referensi artis/lagu jika ada]
+- **Sound Design:** [SFX khas produk yang menjadi identitas audio iklan ini — suara yang akan penonton ingat]
+- **VO Philosophy:** [Jelaskan pendekatan VO: bukan deskripsi produk, tapi narasi perasaan manusia. Gaya bahasa: {lang_style}]
+- **VO Full Script (1 narasi utuh):** [Tulis FULL VO dari awal sampai akhir sebagai 1 teks mengalir — tanpa menyebut harga, tanpa kata "murah/mahal/terjangkau". Pure puisi tentang momen manusia yang melibatkan {prod_name}.]
 
 {scene_template}
 
@@ -596,21 +642,20 @@ Jangan pernah tulis hanya "same wardrobe" — selalu tulis deskripsi lengkapnya.
 ## 📱 CAMPAIGN KIT
 
 ### Caption Instagram/TikTok
-[Caption lengkap: baris 1-2 adalah HOOK yang memaksa orang berhenti scroll, lanjutkan dengan body cerita, tutup dengan CTA '{cta_goal}'. Maks 150 kata. Gunakan gaya bahasa {lang_style}.]
+[Caption dengan hook 2 baris pertama yang memaksa orang berhenti scroll. Body cerita emosional. Tutup dengan CTA '{cta_goal}'. Maks 150 kata. Gaya bahasa: {lang_style}. Hashtag TANPA SPASI.]
 
 ### Hashtag Strategy
-**Tier 1 — High Volume (5 hashtag):** [hashtag umum dengan jutaan postingan]
-**Tier 2 — Mid Volume (5 hashtag):** [hashtag kategori dengan ratusan ribu postingan]
-**Tier 3 — Niche/Branded (5 hashtag):** [hashtag unik produk + lokal Lampung/Indonesia]
+**Tier 1 — High Volume (5 hashtag):** [hashtag umum jutaan postingan — tanpa spasi]
+**Tier 2 — Mid Volume (5 hashtag):** [hashtag kategori ratusan ribu postingan — tanpa spasi]
+**Tier 3 — Niche/Branded (5 hashtag):** [hashtag unik produk + lokal Lampung/Indonesia — tanpa spasi]
 
 ### 🎙️ Voice Over Script Final (Siap Rekam)
-[Compile semua VO jadi 1 script bersih dengan timing per scene. Format untuk talent rekam langsung.]
-
-(0:00 - Scene 1) "[VO scene 1]"
+[VO bersih per scene dengan timing. Siap dibaca talent tanpa arah visual. Format:]
+(0:00 - Scene 1) "..."
 [dst sesuai jumlah scene]
 
 ### 💰 3 Tips Produksi Hemat UMKM
-[Tips eksekusi murah tapi hasilnya setara agency — spesifik, actionable, relevan dengan {location_desc} dan {tone_style}]
+[Tips eksekusi sinematik dengan budget minimal — spesifik, actionable, relevan dengan {location_desc} dan cara menangkap Signature Moment dengan smartphone]
 """
 
             res = model_gemini.generate_content([master_prompt] + image_parts)
