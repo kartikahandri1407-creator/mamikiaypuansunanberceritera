@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfigurasi Halaman 
+# 1. Konfigurasi Halaman (Layout Boutique)
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
 # 2. CSS TOBAT NASUHA
@@ -75,7 +75,7 @@ st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_a
 
 # 5. Form Input
 st.markdown("### 📸 Visual Produk")
-# UPLOAD SEKARANG WAJIB
+# UPLOAD WAJIB
 uploaded_file = st.file_uploader("Unggah foto produk asli (WAJIB untuk Kunci Bentuk & Kemasan)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
@@ -86,19 +86,50 @@ st.divider()
 st.markdown("### ✍️ Narasi & Gaya")
 prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Keripik Pisang KWT Sumber Rejeki II")
 
+# Baris 1: Klasifikasi & Durasi
 c1, c2 = st.columns(2)
 with c1:
-    category = st.selectbox("Klasifikasi Produk", ["Kuliner Premium", "Kriya & Warisan", "Fashion & Lifestyle", "Beauty & Aura", "Hospitality"])
+    kategori_pilihan = [
+        "Kuliner Premium", 
+        "Kriya & Warisan", 
+        "Fashion & Lifestyle", 
+        "Beauty & Aura", 
+        "Agrobisnis & Herbal", 
+        "Hospitality", 
+        "Lainnya (Ketik Manual)"
+    ]
+    category_select = st.selectbox("Klasifikasi Produk", kategori_pilihan)
+    
+    # Logika UX: Input manual jika pilih "Lainnya"
+    if category_select == "Lainnya (Ketik Manual)":
+        category = st.text_input("Ketik Kategori Spesifik", placeholder="Misal: Elektronik, Jasa, dll.")
+    else:
+        category = category_select
+
     duration = st.selectbox("Durasi Iklan", ["15 Detik", "30 Detik", "60 Detik"])
+
 with c2:
     format_video = st.selectbox("Format/Rasio", ["9:16 (Vertical)", "1:1 (Square)", "16:9 (Widescreen)"])
     model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia"])
 
+# Baris 2: Tone & Bahasa
 c3, c4 = st.columns(2)
 with c3:
-    tone_style = st.selectbox("Tone / Suasana", ["Mewah (Luxury/Gold)", "Tradisional (Heritage/Warm)", "Modern (Minimalist/Clean)", "Premium (High-End/Elegant)"])
+    tone_style = st.selectbox("Tone / Suasana", [
+        "Mewah (Luxury/Gold)", 
+        "Tradisional (Heritage/Warm)", 
+        "Modern (Minimalist/Clean)", 
+        "Premium (High-End/Elegant)",
+        "Ceria (Fun/Energetic)"
+    ])
 with c4:
-    lang_style = st.selectbox("Gaya Bahasa", ["Bahasa Indonesia Puitis", "English Kekinian (Gen-Z Style)", "Mixed (Indoglish/Bilingual)"])
+    lang_style = st.selectbox("Gaya Bahasa VO & Teks", [
+        "Bahasa Indonesia Puitis (Elegan/Sastra)", 
+        "Bahasa Indonesia Kasual (Hangat/Akrab)",
+        "Bahasa Indonesia Profesional (Modern/Tegas)",
+        "English Kekinian (Gen-Z Style)", 
+        "Mixed (Indoglish/Bilingual)"
+    ])
 
 details = st.text_area("Jiwa Produk & Pesan Utama", placeholder="Ceritakan rahasia atau nilai seni di balik produk ini...")
 
@@ -106,14 +137,17 @@ generate = st.button("Mulai Tenun Cerita ✨", use_container_width=True)
 
 # 6. Logika Eksekusi
 if generate:
-    # VALIDASI WAJIB: Pastikan gambar sudah diupload
+    # Validasi Berjenjang (Anti Error)
     if not uploaded_file:
         st.error("🚨 Mohon unggah Foto Produk terlebih dahulu! Gambar ini wajib sebagai panduan mutlak AI.")
     elif not prod_name or not details:
         st.warning("🚨 Mohon lengkapi Nama Mahakarya dan Jiwa Produk.")
+    elif category_select == "Lainnya (Ketik Manual)" and not category:
+        st.warning("🚨 Mohon ketikkan Kategori Spesifik produk Anda.")
     else:
-        with st.spinner(f"📜 Menganalisis gambar referensi secara ketat untuk tone {tone_style}..."):
+        with st.spinner(f"📜 Merajut mahakarya {category} dengan tone {tone_style}..."):
             try:
+                # Setup Auto Parameter Midjourney
                 ar_param = "--ar 9:16"
                 if "1:1" in format_video:
                     ar_param = "--ar 1:1"
@@ -125,39 +159,40 @@ if generate:
 
                 model = genai.GenerativeModel('gemini-2.5-flash')
                 
-                # --- PROMPT VERSION: ABSOLUTE REFERENCE LOCK ---
+                # --- PROMPT VERSION: THE ULTIMATE MASTERPIECE ---
                 master_prompt = f"""
-                Anda adalah Creative Director, Ahli Analisis Visual, & Brand Guardian Senior.
-                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk '{prod_name}'.
+                Anda adalah Creative Director, Ahli Analisis Visual, & Copywriter Kelas Dunia.
+                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk mahakarya '{prod_name}'.
                 
+                KATEGORI: {category}.
                 GAYA VISUAL: {tone_style}. 
                 GAYA BAHASA: {lang_style}.
                 MODEL: {model_type}.
 
                 ATURAN HARGA MATI (GAMBAR REFERENSI ADALAH HUKUM TERTINGGI):
                 1. ANALISIS WAJIB: Anda WAJIB menganalisis gambar referensi yang telah dilampirkan. Segala bentuk halusinasi visual yang bertentangan dengan gambar ini DILARANG KERAS.
-                2. BENTUK FISIK: Deskripsikan bentuk asli produk dengan presisi (misal: jika keripik diiris memanjang, tulis "long lengthwise sliced"). JANGAN MENGARANG bentuk seperti oval atau bulat jika tidak sesuai gambar.
-                3. BRANDING KEMASAN: Replikasi 100% detail teks, warna, dan logo pada kemasan persis seperti gambar.
-                4. KONSISTENSI PENGINGAT: Di setiap prompt bahasa Inggris, Anda WAJIB menyertakan instruksi: "Exactly matching the provided reference image" atau "Identical to the uploaded reference packaging/product".
+                2. BENTUK FISIK: Deskripsikan bentuk asli produk dengan presisi (misal: jika keripik diiris memanjang, tulis "long lengthwise sliced"). JANGAN MENGARANG bentuk jika tidak sesuai gambar.
+                3. BRANDING KEMASAN: Replikasi 100% detail teks, warna, dan logo pada kemasan persis seperti gambar di scene akhir.
+                4. KONSISTENSI: Di setiap prompt bahasa Inggris, WAJIB sertakan instruksi: "Exactly matching the provided reference image".
 
                 ATURAN TEKNIS LENGKAP:
-                - Durasi: TEPAT 5 detik per Scene.
+                - Durasi: TEPAT 5 detik per Scene. (15s = 3 Scene, 30s = 6 Scene).
                 - Kamera: Wajib ada instruksi Lensa, Angle, dan Pergerakan 5 detik.
-                - Format Teks: PROMPT GAMBAR, VIDEO, DAN MUSIK WAJIB dibungkus dalam blok kode Markdown (```text ... ```).
+                - Naskah (VO): Sesuaikan nada bicara dengan {lang_style}. Jangan puitis jika klien meminta kasual/fun.
+                - Format Teks: PROMPT GAMBAR, VIDEO, DAN MUSIK WAJIB dibungkus dalam blok kode Markdown (```text ... ```) agar mudah di-copy klien.
 
-                FORMAT OUTPUT (WAJIB):
+                FORMAT OUTPUT (WAJIB PER SCENE):
                 ---
-                🔍 ANALISIS VISUAL REFERENSI:
-                [Sebutkan dengan detail bentuk fisik produk dan detail kemasan dari gambar referensi. Kalimat ini mengunci pemahaman Anda agar tidak melenceng].
+                🔍 ANALISIS VISUAL REFERENSI (Sebutkan di awal saja):
+                [Sebutkan dengan detail bentuk fisik produk dan detail kemasan dari gambar referensi agar Anda tidak berhalusinasi di langkah selanjutnya].
 
                 🎬 SCENE [Nomor]: [Nama Scene] (5 detik)
 
                 👁️ DESKRIPSI VISUAL (Bahasa Indonesia):
-                [Detail komposisi, interaksi model, dan deskripsi produk yang 100% KONSISTEN dengan gambar referensi].
+                [Detail komposisi, interaksi model, dan nuansa {tone_style} yang 100% konsisten dengan gambar referensi].
 
                 📸 PROMPT GAMBAR (English - Midjourney Style):
-                
-```text
+                ```text
                 [High-detail static prompt. MUST explicitly describe the accurate physical shape and EXACT branding. INCLUDE: "Exactly matching the provided reference image in shape, color, and branding."] {ar_param} --style raw --v 6.0
                 ```
 
@@ -167,13 +202,13 @@ if generate:
                 ```
 
                 🎙️ ELEMEN AUDIO & TEKS ({lang_style}):
-                - Voice Over (VO): "[Naskah sesuai gaya bahasa]"
-                - SFX & Musik: "[Efek suara taktil & instrumen]"
-                - On-Screen Text & Posisi: "[Teks dan saran letak]"
+                - Voice Over (VO): "[Naskah sesuai {lang_style}]"
+                - SFX & Musik: "[Efek suara taktil & instrumen sesuai {tone_style}]"
+                - On-Screen Text & Posisi: "[Teks estetik dan saran letaknya]"
                 
                 🎵 PROMPT MUSIK AI (English - Suno/Udio Ready):
                 ```text
-                [Genre, tempo, mood matching {tone_style}]
+                [Genre, tempo, mood, and instrumentation matching {tone_style} and {category}]
                 ```
                 ---
                 """
