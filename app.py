@@ -2,13 +2,13 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. Konfigurasi Halaman 
+# 1. Konfigurasi Halaman (Layout Boutique)
 st.set_page_config(page_title="Mamikiaypuansunan Berceritera", page_icon="📜", layout="centered")
 
 # 2. CSS TOBAT NASUHA
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+    @import url('[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap)');
     
     html, body, [class*="st-"] { font-family: 'Plus Jakarta Sans', sans-serif; }
     .stApp { background-color: #fafaf9; }
@@ -75,23 +75,31 @@ st.markdown("<div class='subtitle'>BEYOND ADS: WE WEAVE LEGENDS</div>", unsafe_a
 
 # 5. Form Input
 st.markdown("### 📸 Visual Produk")
-uploaded_file = st.file_uploader("Unggah foto produk asli (Referensi Utama)", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Unggah foto produk (Referensi Wajib untuk Brand Lock)", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="Identitas Visual Terkunci", use_container_width=True)
+    st.image(uploaded_file, caption="Referensi Visual Terkunci", use_container_width=True)
 
 st.divider()
 
-st.markdown("### ✍️ Narasi Produk")
-prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Keripik Pisang KWT Sumber Rejeki II")
+st.markdown("### ✍️ Narasi & Gaya")
+prod_name = st.text_input("Nama Mahakarya", placeholder="Misal: Keripik Pisang Sumber Rejeki")
 
-col1, col2 = st.columns(2)
-with col1:
-    category = st.selectbox("Klasifikasi", ["Kriya & Warisan", "Kuliner Premium", "Fashion & Lifestyle", "Beauty & Aura", "Hospitality", "Agrowisata"])
-    duration = st.selectbox("Durasi", ["15 Detik", "30 Detik", "60 Detik"])
-with col2:
+# Baris 1: Klasifikasi & Durasi
+c1, c2 = st.columns(2)
+with c1:
+    category = st.selectbox("Klasifikasi Produk", ["Kuliner Premium", "Kriya & Warisan", "Fashion & Lifestyle", "Beauty & Aura", "Hospitality"])
+    duration = st.selectbox("Durasi Iklan", ["15 Detik", "30 Detik", "60 Detik"])
+with c2:
     format_video = st.selectbox("Format/Rasio", ["9:16 (Vertical)", "1:1 (Square)", "16:9 (Widescreen)"])
-    model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia", "Remaja"])
+    model_type = st.selectbox("Tokoh (Model)", ["Tanpa Model", "Wanita Dewasa", "Pria Dewasa", "Anak-anak", "Lansia"])
+
+# Baris 2: Tone & Bahasa
+c3, c4 = st.columns(2)
+with c3:
+    tone_style = st.selectbox("Tone / Suasana", ["Mewah (Luxury/Gold)", "Tradisional (Heritage/Warm)", "Modern (Minimalist/Clean)", "Premium (High-End/Elegant)"])
+with c4:
+    lang_style = st.selectbox("Gaya Bahasa", ["Bahasa Indonesia Puitis", "English Kekinian (Gen-Z Style)", "Mixed (Indoglish/Bilingual)"])
 
 details = st.text_area("Jiwa Produk & Pesan Utama", placeholder="Ceritakan rahasia atau nilai seni di balik produk ini...")
 
@@ -102,8 +110,15 @@ if generate:
     if not prod_name or not details:
         st.warning("Mohon lengkapi Nama Mahakarya dan Jiwa Produk.")
     else:
-        with st.spinner("📜 Mamiki sedang menyusun narasi dan teks butik Anda..."):
+        with st.spinner(f"📜 Meracik mahakarya dengan tone {tone_style}..."):
             try:
+                # Menyiapkan parameter Aspect Ratio otomatis untuk Midjourney
+                ar_param = "--ar 9:16"
+                if "1:1" in format_video:
+                    ar_param = "--ar 1:1"
+                elif "16:9" in format_video:
+                    ar_param = "--ar 16:9"
+
                 image_parts = []
                 if uploaded_file:
                     image = Image.open(uploaded_file)
@@ -111,47 +126,57 @@ if generate:
 
                 model = genai.GenerativeModel('gemini-2.5-flash')
                 
-                # --- PROMPT VERSION: LUXURY UX & INDONESIAN PURITY ---
+                # --- PROMPT VERSION: ULTIMATE COMPLETE (KAMERA, ANGLE, AUDIO, AUTO-COPY) ---
                 master_prompt = f"""
-                Anda adalah Creative Director & UX Copywriter Senior. 
-                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk mahakarya: '{prod_name}'.
+                Anda adalah Creative Director & Brand Guardian Senior.
+                Tugas: Buat storyboard iklan {duration} rasio {format_video} untuk '{prod_name}'.
+                
+                GAYA VISUAL: {tone_style}. 
+                GAYA BAHASA VO/TEKS: {lang_style}.
+                MODEL: {model_type}.
 
-                ATURAN HARGA MATI TEKS & BAHASA:
-                1. 100% BAHASA INDONESIA: Gunakan padanan kata yang puitis, eksklusif, dan indah. Dilarang menggunakan istilah Inggris seperti "Crisp", "Natural", "Best Seller", dll. Gunakan kata seperti "Renyah Alami", "Sentuhan Murni", "Warisan Terpilih".
-                2. FONT & STYLE: Untuk setiap scene, tentukan jenis font yang digunakan (e.g., 'Modern Serif untuk kemewahan' atau 'Elegant Sans-Serif untuk kesegaran').
-                3. UX PLACEMENT: Tentukan posisi teks di layar (misal: 'Sudut bawah kanan' atau 'Tengah atas dengan margin luas'). Teks TIDAK BOLEH mengganggu atau menutupi detail produk utama.
-                4. BRANDING: Pastikan teks di layar konsisten dengan merek pada gambar referensi.
+                ATURAN VISUAL LOCK (HARGA MATI):
+                1. IDENTITAS: Jika ada gambar referensi, identifikasi Merek, Logo, Warna Label, dan Bentuk Produk. DILARANG KERAS halusinasi mengubah teks kemasan.
+                2. KONSISTENSI FISIK: Bentuk fisik produk (isi) harus 100% konsisten di setiap scene.
 
-                ATURAN KONTINUITAS:
-                - Durasi per Scene tepat 5 detik.
-                - Jika ada model (Model: {model_type}), detail mikro (kutek kuku, baju) harus KONSISTEN di setiap prompt video.
-                - Suara VO harus memiliki satu persona yang sama dari awal sampai akhir.
+                ATURAN TEKNIS LENGKAP:
+                - KAMERA & ANGLE: Setiap Prompt Video WAJIB memiliki instruksi jenis lensa (macro, wide), sudut pandang (eye-level, low angle, extreme close-up), dan pergerakan kamera 5 detik (slow pan, dolly in).
+                - AUDIO INTEGRATION: Prompt Video WAJIB mencantumkan instruksi *sound effects* (SFX) taktil (seperti suara "kriuk", desis angin) dan *cues* musik latar yang menyesuaikan *tone*.
+                - TULIS PROMPT DALAM FORMAT MARKDOWN (```text ... ```) agar bisa langsung di-copy oleh user.
 
-                FORMAT OUTPUT (WAJIB):
+                FORMAT OUTPUT (WAJIB PER SCENE 5 DETIK):
                 ---
                 🎬 SCENE [Nomor]: [Nama Scene] (5 detik)
 
                 👁️ DESKRIPSI VISUAL (Bahasa Indonesia):
-                [Detail komposisi, pencahayaan, dan konfirmasi konsistensi detail mikro].
+                [Detail komposisi, angle kamera, interaksi model, dan suasana sesuai tone {tone_style}].
 
                 📸 PROMPT GAMBAR (English - Midjourney Style):
-                [Static detail. Deskripsikan merek & kemasan SESUAI gambar referensi. NO TEXT IN IMAGE].
+                ```text
+                [High-detail static prompt. Camera angle, lens type. Reference the uploaded branding precisely. NO HALUCINATIONS on labels] {ar_param} --style raw --v 6.0
+                ```
 
                 🎥 PROMPT VIDEO ALL-IN-ONE (English - Kling Style):
-                [Self-contained paragraph. Deskripsikan wujud produk/kemasan + pergerakan kamera 5 detik + detail model].
+                ```text
+                [Self-contained paragraph. Wujud kemasan/produk asli + Camera Angle + Pergerakan Kamera 5 detik + Pergerakan Subjek + Audio SFX & Music Cues sesuai tone {tone_style}]
+                ```
 
-                🎙️ ELEMEN AUDIO & TEKS (Bahasa Indonesia):
-                - Voice Over (VO): "[Naskah mengalir dan puitis]"
-                - SFX & Musik: "[Deskripsi instrumen lokal & suara taktil]"
-                - On-Screen Text: "[TEKS DALAM BAHASA INDONESIA YANG INDAH]"
-                - Font Style & Position: "[Tentukan jenis font dan posisi agar tidak menutupi produk]"
+                🎙️ ELEMEN AUDIO & TEKS ({lang_style}):
+                - Voice Over (VO): "[Naskah sesuai gaya bahasa]"
+                - SFX & Musik: "[Deskripsi spesifik efek suara dan instrumen musik]"
+                - On-Screen Text & Posisi: "[Teks dan saran letak/font]"
+                
+                🎵 PROMPT MUSIK AI (English - Suno/Udio Ready):
+                ```text
+                [Genre, tempo, mood, and specific instrumentation matching the {tone_style} vibe]
+                ```
                 ---
                 """
                 res = model.generate_content([master_prompt] + image_parts)
                 st.balloons()
                 
-                st.markdown("### 🎞️ Hasil Racikan Mahakarya (UX & Branding Optimized)")
-                st.info(res.text) 
+                st.markdown(f"### 🎞️ Hasil Racikan: {tone_style} | {lang_style}")
+                st.markdown(res.text) # Menggunakan st.markdown agar fitur code-block (kotak copy) berfungsi
                 
                 st.download_button("Simpan Storyboard (TXT)", res.text, file_name=f"Storyboard_{prod_name}.txt", use_container_width=True)
             except Exception as e:
