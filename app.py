@@ -361,7 +361,16 @@ with tab4:
         max_chars=500
     )
     char_count = len(details) if details else 0
-    st.caption(f"📝 {char_count}/500 karakter")
+
+    # Quality meter
+    if char_count == 0:
+        st.caption("📝 0/500 karakter")
+    elif char_count < 50:
+        st.error(f"📝 {char_count}/500 — Terlalu singkat. AI butuh minimal 50 karakter untuk output berkualitas.")
+    elif char_count < 150:
+        st.warning(f"📝 {char_count}/500 — Lumayan. Semakin detail, semakin sinematik hasilnya.")
+    else:
+        st.success(f"📝 {char_count}/500 — Bagus! Detail ini cukup untuk output kelas atas.")
     
     music_mood = st.selectbox(
         "Mood Musik",
@@ -388,7 +397,10 @@ if generate:
     if not prod_name or not details:
         st.warning("🚨 Lengkapi **Nama Produk** (tab Produk) & **Cerita Produk** (tab Pesan) dulu ya!")
         st.stop()
-    
+    if char_count < 50:
+        st.error("🚨 Cerita produk terlalu singkat. Tambahkan detail dulu (min. 50 karakter).")
+        st.stop()
+
     # Dynamic Scene Config
     scene_config = {
         "15 Detik": {"count": 3, "per_scene": "5 detik"},
@@ -399,93 +411,407 @@ if generate:
     scene_count = cfg["count"]
     scene_dur = cfg["per_scene"]
 
-    # Aspect ratio parameter
+    # Aspect ratio
     ar_param = "--ar 9:16"
     if "1:1" in format_video:
         ar_param = "--ar 1:1"
     elif "16:9" in format_video:
         ar_param = "--ar 16:9"
 
+    ar_ratio = ar_param.replace("--ar ", "")
+
     # -------------------------------------------------------
-    # WARDROBE RESOLUTION
-    # Wardrobe_desc diteruskan ke setiap prompt secara eksplisit.
-    # Jika user pilih "Otomatis", AI tetap punya anchor deskripsi.
+    # WARDROBE SYSTEM — Deskripsi fisik super eksplisit
+    # + CLOTHING OVERRIDE BLOCK wajib disuntik ke tiap prompt
     # -------------------------------------------------------
+
+    WARDROBE_EXPLICIT_MAP = {
+        "Kasual Minimalis (Clean & Simple)": (
+            "plain white V-neck short-sleeve cotton t-shirt — COMPLETELY BLANK, "
+            "NO text, NO logo, NO brand name, NO print, NO graphic of any kind on the shirt "
+            "— paired with plain dark navy blue straight-fit jeans, no belt, no accessories"
+        ),
+        "Formal Elegant (Jas/Blazer/Silk)": (
+            "slim-fit charcoal blazer over a crisp white dress shirt with top button open, no tie, "
+            "dark tailored trousers, simple silver watch on left wrist — no other accessories"
+        ),
+        "Tradisional Modern (Kebaya/Batik Rapi)": (
+            "neat modern batik shirt in warm earth-tone colors (brown/ochre/forest green), "
+            "well-fitted and pressed, paired with dark formal trousers — clean and dignified"
+        ),
+        "Streetwear Modern": (
+            "oversized solid-color crew neck sweatshirt in muted tone (sage/stone/slate), "
+            "NO logo NO text NO graphic print anywhere on the fabric, "
+            "paired with slim dark jogger pants and clean white sneakers"
+        ),
+    }
+
     WARDROBE_AUTO_MAP = {
-        "Mewah (Luxury/Gold)":         "elegant silk blouse or well-fitted blazer in cream/gold tones, minimal jewelry",
-        "Tradisional (Heritage/Warm)": "neat modern kebaya or batik outfit in warm earth tones, traditional Lampung accent",
-        "Modern (Minimalist/Clean)":   "linen short-sleeve shirt in broken-white rolled at elbows, khaki or light-gray chino pants",
-        "Premium (High-End/Elegant)":  "slim-fit blazer in charcoal or navy over a clean white shirt, no tie, minimal accessories",
-        "Ceria (Fun/Energetic)":       "bright casual t-shirt in solid color (mustard/coral/white), clean jogger or chino pants",
+        "Mewah (Luxury/Gold)": (
+            "elegant silk blouse or well-fitted blazer in cream or soft gold tones, "
+            "minimal jewelry — one simple necklace or earring only, no heavy accessories, "
+            "NO text NO logo NO brand name on any garment"
+        ),
+        "Tradisional (Heritage/Warm)": (
+            "neat modern kebaya or batik outfit in warm earth tones with traditional Lampung accent details, "
+            "well-pressed and dignified, minimal modern accessories, "
+            "NO text NO logo NO brand name on any garment"
+        ),
+        "Modern (Minimalist/Clean)": (
+            "plain linen short-sleeve shirt in off-white or light beige, sleeves rolled neatly to elbow, "
+            "NO text NO logo NO print of any kind, paired with khaki or light gray chino pants"
+        ),
+        "Premium (High-End/Elegant)": (
+            "slim-fit blazer in charcoal or navy over a clean white shirt with top button open, "
+            "no tie, minimal silver accessories, dark tailored trousers, "
+            "NO text NO logo NO brand name on any garment"
+        ),
+        "Ceria (Fun/Energetic)": (
+            "solid-color casual t-shirt in mustard yellow or coral or white — "
+            "NO text NO logo NO print of any kind anywhere on the fabric, "
+            "paired with clean chino pants or jogger in neutral tone"
+        ),
     }
 
     if wardrobe_desc == "Otomatis Sesuai Tone Iklan":
-        wardrobe_for_prompt = WARDROBE_AUTO_MAP.get(tone_style, "clean casual outfit appropriate for the ad tone")
+        wardrobe_for_prompt = WARDROBE_AUTO_MAP.get(
+            tone_style,
+            "clean plain casual outfit — NO text NO logo NO brand name anywhere on clothing"
+        )
         wardrobe_label = f"Auto ({tone_style}): {wardrobe_for_prompt}"
+    elif wardrobe_desc in WARDROBE_EXPLICIT_MAP:
+        wardrobe_for_prompt = WARDROBE_EXPLICIT_MAP[wardrobe_desc]
+        wardrobe_label = wardrobe_desc
     else:
-        wardrobe_for_prompt = wardrobe_desc
+        wardrobe_for_prompt = (
+            wardrobe_desc
+            + " — CRITICAL: NO visible brand text, logo, or print on clothing unless explicitly described above"
+        )
         wardrobe_label = wardrobe_desc
 
+    # CLOTHING OVERRIDE BLOCK — disuntik ke SETIAP prompt gambar & video
+    # Ini yang menyelesaikan masalah logo "AIRY" dari foto referensi
+    CLOTHING_OVERRIDE = (
+        "CLOTHING OVERRIDE — HIGHEST PRIORITY, OVERRIDES ALL REFERENCE IMAGES: "
+        "The clothing in the OUTPUT must exactly match this description: {wardrobe}. "
+        "The character reference photo (Image 2) may show a shirt with text, logo, or brand name (e.g. 'AIRY') — "
+        "COMPLETELY IGNORE and ERASE any text, logo, brand name, or print visible on the clothing in the reference photo. "
+        "Image 2 is used for FACE, SKIN TONE, HAIR, and BODY PROPORTIONS ONLY — NOT for clothing. "
+        "Generate the exact wardrobe described above. The shirt must be 100% blank solid color with zero text or logo."
+    ).format(wardrobe=wardrobe_for_prompt)
+
     # -------------------------------------------------------
-    # TALENT DESCRIPTION
+    # TALENT ANCHOR — termasuk clothing override
     # -------------------------------------------------------
     if uploaded_model:
         talent_anchor = (
-            "EXACT same talent face and physical appearance as Image 2 (character reference). "
-            f"Wardrobe locked: {wardrobe_for_prompt}. "
-            "This wardrobe MUST be IDENTICAL across every single scene — no variation, no substitution."
+            "FACE & BODY: Use Image 2 as character reference (--cref in Midjourney / Character Reference in Flux/Kling). "
+            "EXACT same face features, skin tone, hair color/style, facial hair, and body build as Image 2 in every scene. "
+            f"{CLOTHING_OVERRIDE}"
         )
         talent_label_line = "📷 **Image 1** (produk) + 📷 **Image 2** (model/wajah talent) — keduanya WAJIB disertakan"
         image_ref_instruction = (
-            "PENTING UNTUK TOOLS AI GAMBAR: "
-            "Gunakan Image 1 sebagai product reference. "
-            "Gunakan Image 2 sebagai character reference (--cref di Midjourney, atau 'Character Reference' di Flux/Kling). "
-            "Wajah, kulit, rambut talent HARUS IDENTIK dengan Image 2 di semua scene tanpa pengecualian."
+            "UNTUK AI IMAGE/VIDEO TOOLS: "
+            "Image 1 = product reference (kemasan, warna, label). "
+            "Image 2 = character reference untuk WAJAH & FISIK SAJA — bukan baju. "
+            "Gunakan --cref (Midjourney) atau Character Reference (Flux/Kling). "
+            "WAJAH talent HARUS IDENTIK Image 2 di semua scene. "
+            "ABAIKAN dan HAPUS tulisan/logo pada baju di Image 2 — ikuti deskripsi wardrobe di atas."
         )
     else:
         talent_anchor = (
-            f"Generate consistent talent: {talent_gender}, usia {talent_age}, etnis/look {talent_ethnicity}. "
-            f"Wardrobe locked: {wardrobe_for_prompt}. "
-            "This SAME face, SAME body type, SAME wardrobe MUST appear IDENTICALLY across every single scene. "
-            "Do NOT change the character's appearance between scenes."
+            f"GENERATE CONSISTENT TALENT: {talent_gender}, usia {talent_age}, etnis {talent_ethnicity}, "
+            "natural Indonesian features, warm authentic expression, same face across ALL scenes. "
+            f"{CLOTHING_OVERRIDE}"
         )
-        talent_label_line = "📷 **Image 1** (produk) — wajib disertakan | Model: AI-generated (konsisten lintas scene)"
+        talent_label_line = "📷 **Image 1** (produk) — wajib disertakan | Model: AI-generated (wajah konsisten lintas scene)"
         image_ref_instruction = (
-            "PENTING UNTUK TOOLS AI GAMBAR: "
-            "Gunakan Image 1 sebagai product reference. "
-            "Untuk konsistensi wajah model tanpa Image 2: gunakan fitur 'Consistent Character' atau seed yang sama di setiap scene generation."
+            "UNTUK AI IMAGE/VIDEO TOOLS: "
+            "Image 1 = product reference. "
+            "Untuk konsistensi wajah: gunakan seed yang sama, 'Consistent Character', atau --sref di Midjourney. "
+            "Wajah model HARUS IDENTIK di semua scene."
         )
+
+    # -------------------------------------------------------
+    # COLOR GRADE per tone
+    # -------------------------------------------------------
+    COLOR_GRADE_MAP = {
+        "Mewah (Luxury/Gold)":         "warm gold-teal split tone, rich shadows, luminous highlights — Johnnie Walker luxury commercial grade",
+        "Tradisional (Heritage/Warm)": "warm amber-brown grade, slightly desaturated, subtle film grain — heritage documentary warmth",
+        "Modern (Minimalist/Clean)":   "clean neutral grade, soft contrast, slightly cool highlights — high-end lifestyle magazine editorial",
+        "Premium (High-End/Elegant)":  "warm teal-orange complementary grade, deep blacks, glowing skin tones — Nescafé Asia series grade",
+        "Ceria (Fun/Energetic)":       "bright punchy grade, warm saturation boost, clean whites — modern Southeast Asian food commercial energy",
+    }
+    color_grade = COLOR_GRADE_MAP.get(tone_style, "warm cinematic grade, Arri Alexa color science")
+
+    # -------------------------------------------------------
+    # CINEMATIC REFERENCE per tone — anchor kualitas sutradara
+    # -------------------------------------------------------
+    CINEMATIC_REF_MAP = {
+        "Mewah (Luxury/Gold)":         "Cinematography reference: Roger Deakins. Ad reference: Johnnie Walker 'The Man Who Walked Around The World'. Every frame must feel like it costs a million dollars.",
+        "Tradisional (Heritage/Warm)": "Cinematography reference: Wong Kar-wai warmth, Uberto Pasolini stillness. Ad reference: AQUA Indonesia 'Perjalanan'. Frames that make you miss a place you've never been.",
+        "Modern (Minimalist/Clean)":   "Cinematography reference: Emmanuel Lubezki. Ad reference: Apple 'Shot on iPhone' series. Clean, elegant, the silence between sentences.",
+        "Premium (High-End/Elegant)":  "Cinematography reference: Wally Pfister. Ad reference: Nescafé Asia regional series. The feeling of premium without saying premium.",
+        "Ceria (Fun/Energetic)":       "Cinematography reference: Thai commercial school — warm, kinetic, human. Ad reference: Indomie 'Sahabat', Walls Thailand. Joy that feels real, not performed.",
+    }
+    cinematic_ref = CINEMATIC_REF_MAP.get(tone_style, "Cinematography reference: Arri Alexa, professional commercial grade.")
+
+    # -------------------------------------------------------
+    # SCENE NAMES — dikunci per tone & posisi, bukan diserahkan ke AI
+    # -------------------------------------------------------
+    SCENE_NAMES = {
+        "Mewah (Luxury/Gold)":         {1: "DIAM SEBELUM EMAS", 2: "SENTUHAN PERTAMA", 3: "TIDAK ADA KATA LAIN", 4: "DUNIA YANG BERHENTI", 5: "INI MILIKMU", 6: "WARISAN RASA"},
+        "Tradisional (Heritage/Warm)": {1: "SEBELUM SEGALANYA", 2: "TANGAN YANG TAHU", 3: "PULANG", 4: "AKAR YANG BERBICARA", 5: "DITURUNKAN", 6: "ABADI"},
+        "Modern (Minimalist/Clean)":   {1: "RUANG UNTUK BERNAPAS", 2: "MOMEN ITU", 3: "CUKUP", 4: "DETAIL YANG JUJUR", 5: "PILIHAN YANG TEPAT", 6: "HIDUP YANG DIPILIH"},
+        "Premium (High-End/Elegant)":  {1: "SEBELUM SEGALANYA", 2: "SAAT ITU TERJADI", 3: "TIDAK ADA KATA LAIN", 4: "YANG TERSISA", 5: "MILIK MEREKA YANG TAHU", 6: "SELALU"},
+        "Ceria (Fun/Energetic)":       {1: "DETIK YANG DITUNGGU", 2: "LEDAKAN KECIL", 3: "MOMEN ITU", 4: "LAGI", 5: "BERBAGI", 6: "HARI INI MILIKMU"},
+    }
+    scene_name_map = SCENE_NAMES.get(tone_style, {i: f"SCENE {i}" for i in range(1, 7)})
+
+    # -------------------------------------------------------
+    # FOCAL LENGTH per scene
+    # -------------------------------------------------------
+    FOCAL_MAP = {
+        1: ("35mm", "wide enough to breathe — talent belongs to the world, not posed in it"),
+        2: ("85mm", "compression pulls viewer in — background melts, face fills emotional space"),
+        3: ("50mm", "natural human perspective — honest, warm, real"),
+        4: ("100mm macro", "extreme intimacy — texture of product, micro-expression of soul"),
+        5: ("85mm", "quiet confidence — talent looks inward, viewer looks with them"),
+        6: ("35mm", "pull back to show the world — product in context, story complete"),
+    }
+
+    # -------------------------------------------------------
+    # CINEMATIC CAMERA NOTES per scene — momen, bukan deskripsi posisi
+    # -------------------------------------------------------
+    def build_camera_note(scene_num, location, tone):
+        notes = {
+            1: (
+                f"OPENING FRAME: Start extreme tight — a detail only (steam from cup, edge of table, shadow on wall). "
+                f"MOVEMENT: Imperceptibly slow pull-back on 35mm, so slow the viewer feels they're discovering the scene, not watching it. "
+                f"BEAT (2s in): Talent already present, mid-action — never posed, never waiting for camera. "
+                f"CLOSING FRAME: Talent + {location} established. Product visible but not featured. "
+                f"EMOTIONAL TARGET: The viewer recognizes this moment from their own life before they understand what they're watching."
+            ),
+            2: (
+                f"OPENING FRAME: Tight on the product — packaging detail, texture, light catching an edge. 85mm. "
+                f"MOVEMENT: Slow drift upward or sideways from product to talent's hands, then to face. "
+                f"THE BEAT (hold 2 full seconds): The micro-expression — NOT a big smile. Eyes soften. "
+                f"Shoulders drop 2mm. The exhale that means 'I needed this.' "
+                f"CLOSING FRAME: Face in focus, product softly visible in foreground. "
+                f"EMOTIONAL TARGET: The release. This is the Signature Moment. Every other scene builds to this."
+            ),
+            3: (
+                f"OPENING FRAME: 50mm static — talent slightly off-center, rule of thirds. "
+                f"MOVEMENT: Almost none. A slight settle. The stillness IS the emotion. "
+                f"CLOSING FRAME: Same as opening, but something has shifted — lighter. "
+                f"EMOTIONAL TARGET: The afterglow. The viewer wants to be this person right now."
+            ),
+            4: (
+                f"OPENING FRAME: 100mm macro — product texture fills frame. Light at 45°. "
+                f"MOVEMENT: Rack focus from product surface to talent's eyes in one fluid breath. "
+                f"BEAT: Hold on eyes for 1.5 seconds — the look of someone who has found something worth keeping. "
+                f"CLOSING FRAME: Eyes and product both in soft focus together. "
+                f"EMOTIONAL TARGET: Intimacy between person and product that feels earned, not staged."
+            ),
+            5: (
+                f"OPENING FRAME: 85mm medium — talent faces camera with quiet presence. "
+                f"MOVEMENT: Very slow pull-back reveals {location} around them — world expanding. "
+                f"Product appears naturally in the frame — in hand, on table, never held for camera. "
+                f"CLOSING FRAME: Talent + full world. Complete. "
+                f"EMOTIONAL TARGET: Desire. The viewer wants this life."
+            ),
+            6: (
+                f"OPENING FRAME: Close on product label — sharp, proud, specific. "
+                f"MOVEMENT: 35mm pull-out to full scene at {location}. "
+                f"CTA fades in at bottom — minimal, confident, one line only. "
+                f"CLOSING FRAME: The world this product belongs to. "
+                f"EMOTIONAL TARGET: The last frame must feel like the final page of a beautiful story, not an advertisement."
+            ),
+        }
+        return notes.get(scene_num, f"Cinematic shot appropriate to scene {scene_num} energy and tone.")
+
+    # -------------------------------------------------------
+    # VO FORBIDDEN WORDS + ANCHOR EXAMPLES
+    # -------------------------------------------------------
+    VO_FORBIDDEN = (
+        "ABSOLUTELY FORBIDDEN IN VO — do not use any of these words or concepts: "
+        "harga, murah, mahal, terjangkau, hemat, diskon, promo, renyah, gurih, enak, lezat, crispy, crunchy, "
+        "tekstur, rasa (sebagai deskripsi fisik), beli, order, dapatkan, stok, tersedia. "
+        "VO is POETRY ABOUT HUMAN MOMENTS, not product description. "
+        "If a word describes the physical property of the product, REMOVE IT. "
+        "A good VO test: read it aloud without any image — it must still feel meaningful and beautiful."
+    )
+
+    # Contoh VO iklan TV mahal Asia nyata — anchor jiwa untuk Gemini
+    # Ini yang membedakan output 'konten' vs output 'iklan ratusan juta'
+    VO_ANCHOR_EXAMPLES = f"""
+=== CONTOH VO IKLAN TV MAHAL ASIA — INI STANDAR YANG HARUS DICAPAI ===
+
+CONTOH 1 — AQUA Indonesia (heritage/emotional):
+"Ada perjalanan yang tidak tercatat di peta.
+Yang hanya bisa dirasakan oleh mereka yang pernah sampai di sana.
+Bukan tentang ke mana kamu pergi.
+Tapi tentang siapa yang kamu temukan di perjalanan."
+→ ZERO penyebutan air, mineral, kemurnian. Murni perasaan manusia tentang perjalanan.
+
+CONTOH 2 — Indomie (belonging/warmth):
+"Di mana pun kamu berada, ada satu hal yang selalu membawamu pulang.
+Bukan jaraknya. Bukan waktunya.
+Tapi rasa yang tidak pernah berubah."
+→ ZERO penyebutan mie, kuah, bumbu. Murni tentang kerinduan dan rumah.
+
+CONTOH 3 — Johnnie Walker Asia (aspiration/quiet luxury):
+"Some roads you walk alone.
+Not because no one's there.
+But because some things — you can only discover yourself."
+→ ZERO penyebutan whisky, rasa, aroma. Murni tentang perjalanan personal.
+
+CONTOH 4 — Thai Life Insurance (human truth):
+"Hari ini kamu mungkin tidak ingat apa yang kamu makan.
+Tapi kamu akan selalu ingat siapa yang ada di sebelahmu."
+→ ZERO penyebutan produk asuransi. Murni kebenaran manusia yang universal.
+
+STANDAR: VO yang kamu tulis HARUS SETARA atau MELAMPAUI contoh-contoh di atas.
+Bukan terinspirasi — tapi SETARA. Gunakan contoh ini sebagai ukuran minimum kualitas.
+Gaya bahasa wajib mengikuti input user: {lang_style}
+"""
 
     # -------------------------------------------------------
     # BUILD SCENE BLOCKS
     # -------------------------------------------------------
     scene_blocks = []
     for i in range(1, scene_count + 1):
-        # Scene role
-        if i == 1:
-            scene_role = "OPENING HOOK — Tarik perhatian dalam 1 detik pertama"
-        elif i == scene_count:
-            scene_role = f"KLIMAKS & CTA — Tampilkan produk jelas + ajakan '{cta_goal}'"
-        elif i == scene_count - 1:
-            scene_role = "PUNCAK EMOSI — Tunjukkan keunggulan & manfaat utama produk"
-        else:
-            scene_role = "BUILD UP — Bangun cerita, desire, dan koneksi emosi"
 
-        # Scene-specific camera notes
-        camera_notes = {
-            1: f"Slow dolly-forward or slider shot. Establish setting at {location_desc}.",
-            2: "Push-in close-up. Focus on product detail and talent reaction.",
-            3: "Static medium shot with subtle pull-back. Build emotional peak.",
-            4: "Low angle close-up of product. Hero shot — product is the star.",
-            5: "Medium shot, talent facing camera confidently. Resolution moment.",
-            6: f"Wide pull-out to full scene at {location_desc}. Grand finale with CTA overlay.",
+        scene_name = scene_name_map.get(i, f"SCENE {i}")
+
+        if i == 1:
+            scene_role = "OPENING HOOK — Ciptakan TENSION emosional dalam 1 detik pertama. Jangan jelaskan — rasakan."
+        elif i == scene_count:
+            scene_role = f"KLIMAKS & CTA — DESIRE tercapai. Produk sebagai ikon momen. Ajakan '{cta_goal}' masuk natural, tidak memaksa."
+        elif i == scene_count - 1:
+            scene_role = "PUNCAK EMOSI — RELEASE: Signature Moment. Produk hadir sebagai kelegaan yang tak terhindarkan."
+        else:
+            scene_role = "BUILD UP — Perdalam TENSION. Bangun keintiman antara penonton dan momen yang sedang terjadi."
+
+        focal_len, focal_note = FOCAL_MAP.get(i, ("50mm", "natural human perspective"))
+        cam_note = build_camera_note(i, location_desc, tone_style)
+
+        # ---- NEGATIVE PROMPTS per tool — dikunci per tone ----
+        # Ini yang memisahkan hasil AI dari foto katalog / stock photo
+        NEGATIVE_BASE = (
+            "--no text on clothing, --no logo on clothing, --no brand name on shirt, "
+            "--no AIRY text, --no watermark, --no posed smile, --no looking at camera, "
+            "--no product held toward camera, --no studio lighting, --no white backdrop, "
+            "--no stock photo composition, --no catalog pose, --no advertising smile"
+        )
+        NEGATIVE_TONE_EXTRA = {
+            "Mewah (Luxury/Gold)":         "--no busy background, --no clutter, --no casual clothes",
+            "Tradisional (Heritage/Warm)": "--no modern office, --no cold blue tones, --no fluorescent light",
+            "Modern (Minimalist/Clean)":   "--no warm tones, --no rustic elements, --no heavy shadows",
+            "Premium (High-End/Elegant)":  "--no casual setting, --no flat lighting, --no overexposed",
+            "Ceria (Fun/Energetic)":       "--no sad expression, --no dark moody tones, --no static pose",
         }
-        cam = camera_notes.get(i, "Dynamic shot appropriate to scene energy.")
+        negative_extra = NEGATIVE_TONE_EXTRA.get(tone_style, "")
+        negative_prompt = f"{NEGATIVE_BASE}, {negative_extra}"
+
+        # ---- FRAME-BY-FRAME VIDEO TIMING per scene ----
+        # Per 0.5s timing — ini yang membedakan brief iklan mahal vs brief biasa
+        scene_duration_seconds = int(scene_dur.replace(" detik", ""))
+        VIDEO_TIMING = {
+            1: [
+                f"0:00–{scene_duration_seconds*0.25:.1f}s → EXTREME TIGHT: single environmental detail only (steam, shadow, texture). No talent visible yet.",
+                f"{scene_duration_seconds*0.25:.1f}s–{scene_duration_seconds*0.6:.1f}s → IMPERCEPTIBLY SLOW PULL-BACK begins. Talent enters frame mid-action, never posed.",
+                f"{scene_duration_seconds*0.6:.1f}s–{scene_duration_seconds*0.85:.1f}s → HOLD: talent + location fully established. Product visible but passive.",
+                f"{scene_duration_seconds*0.85:.1f}s–{scene_duration_seconds:.1f}s → FREEZE on tension. Viewer leans in. Cut.",
+            ],
+            2: [
+                f"0:00–{scene_duration_seconds*0.3:.1f}s → TIGHT on product — packaging, texture, light at 45°. Face not yet visible.",
+                f"{scene_duration_seconds*0.3:.1f}s–{scene_duration_seconds*0.5:.1f}s → RACK FOCUS begins: product to hand to face. Slow. Never rushed.",
+                f"{scene_duration_seconds*0.5:.1f}s–{scene_duration_seconds*0.85:.1f}s → HOLD ON FACE: THE MICRO-EXPRESSION. Eyes soften. Exhale. 2mm shoulder drop. This is the Signature Moment.",
+                f"{scene_duration_seconds*0.85:.1f}s–{scene_duration_seconds:.1f}s → Hold the silence. Do not cut early. Let the emotion breathe.",
+            ],
+            3: [
+                f"0:00–{scene_duration_seconds*0.15:.1f}s → STATIC 50mm: talent slightly off-center, rule of thirds. World at rest.",
+                f"{scene_duration_seconds*0.15:.1f}s–{scene_duration_seconds*0.7:.1f}s → ALMOST NO MOVEMENT. A slight settle. The stillness is the emotion.",
+                f"{scene_duration_seconds*0.7:.1f}s–{scene_duration_seconds:.1f}s → Hold. Something invisible has shifted. Lighter. Cut on this feeling.",
+            ],
+            4: [
+                f"0:00–{scene_duration_seconds*0.35:.1f}s → 100mm MACRO: product surface fills frame. Light refracting through texture.",
+                f"{scene_duration_seconds*0.35:.1f}s–{scene_duration_seconds*0.6:.1f}s → RACK FOCUS: product → eyes. One breath. No cut.",
+                f"{scene_duration_seconds*0.6:.1f}s–{scene_duration_seconds*0.9:.1f}s → HOLD on eyes: the look of someone who has found something worth keeping. 1.5 seconds minimum.",
+                f"{scene_duration_seconds*0.9:.1f}s–{scene_duration_seconds:.1f}s → Eyes + product both in soft focus. Cut.",
+            ],
+            5: [
+                f"0:00–{scene_duration_seconds*0.2:.1f}s → 85mm MEDIUM: talent faces camera, quiet presence. World not yet visible.",
+                f"{scene_duration_seconds*0.2:.1f}s–{scene_duration_seconds*0.75:.1f}s → VERY SLOW PULL-BACK: location reveals itself around talent. World expands.",
+                f"{scene_duration_seconds*0.75:.1f}s–{scene_duration_seconds:.1f}s → Product enters frame naturally — in hand or on table. Never held for camera. Cut.",
+            ],
+            6: [
+                f"0:00–{scene_duration_seconds*0.25:.1f}s → CLOSE on product label: sharp, proud, specific. Maximum 3 seconds.",
+                f"{scene_duration_seconds*0.25:.1f}s–{scene_duration_seconds*0.7:.1f}s → 35mm PULL-OUT: full scene at {location_desc} reveals.",
+                f"{scene_duration_seconds*0.7:.1f}s–{scene_duration_seconds*0.85:.1f}s → CTA overlay fades in: minimal, confident, single line.",
+                f"{scene_duration_seconds*0.85:.1f}s–{scene_duration_seconds:.1f}s → HOLD on final frame. The last page of a beautiful story.",
+            ],
+        }
+        timing_lines = VIDEO_TIMING.get(i, [f"0:00–{scene_duration_seconds:.1f}s → Cinematic shot appropriate to scene {i}."])
+        timing_block = "\n".join(timing_lines)
+
+        # ---- PROMPT GAMBAR — LEVEL IKLAN RATUSAN JUTA ----
+        cam_note_parts = cam_note.split('EMOTIONAL TARGET:')
+        emotional_target = cam_note_parts[1].strip() if len(cam_note_parts) > 1 else 'A human moment worth remembering.'
+        scene_action = cam_note_parts[0].strip()
+
+        prompt_gambar = (
+            f"CINEMATIC ADVERTISEMENT PHOTOGRAPHY — {tone_style.upper()} GRADE\n\n"
+            f"THE EMOTIONAL MOMENT TO CAPTURE:\n"
+            f"{emotional_target}\n\n"
+            f"SHOT SETUP:\n"
+            f"- Lens: {focal_len} — {focal_note}\n"
+            f"- Format: {ar_ratio}\n"
+            f"- Color grade: {color_grade}\n"
+            f"- Depth of field: shallow, Arri Alexa color science\n\n"
+            f"SCENE ACTION (frame by frame):\n"
+            f"{scene_action}\n\n"
+            f"LOCATION: {location_desc}\n\n"
+            f"PRODUCT IN FRAME (Image 1 reference):\n"
+            f"Use Image 1 as EXACT product reference. Match all packaging details — color, label text, shape, size, texture — identically. "
+            f"Product placement: [describe exact position and prominence in this scene's frame].\n\n"
+            f"CHARACTER (Image 2 reference — FACE & BODY ONLY):\n"
+            f"{talent_anchor}\n\n"
+            f"CINEMATIC REFERENCE: {cinematic_ref}\n\n"
+            f"NEGATIVE PROMPT: {negative_prompt}\n\n"
+            f"{ar_param} --v 6.0 --style raw --q 2"
+        )
+
+        # ---- PROMPT VIDEO — SHOT GRAMMAR + FRAME-BY-FRAME TIMING ----
+        prompt_video = (
+            f"CINEMATIC TVC — {tone_style.upper()} — {scene_dur} — {ar_ratio}\n\n"
+            f"FRAME-BY-FRAME TIMING:\n"
+            f"{timing_block}\n\n"
+            f"SHOT GRAMMAR (overarching direction):\n"
+            f"{cam_note}\n\n"
+            f"TALENT:\n"
+            f"{talent_anchor}\n\n"
+            f"PRODUCT:\n"
+            f"EXACT {prod_name} from Image 1 — identical packaging, color, label in every frame it appears. "
+            f"Product is [describe exact position, how talent interacts with it, duration visible in frame].\n\n"
+            f"LOCATION: {location_desc}\n\n"
+            f"TECHNICAL:\n"
+            f"- Lens simulation: {focal_len}\n"
+            f"- Color grade: {color_grade}\n"
+            f"- Camera movement speed: very slow, deliberate — never handheld shake\n"
+            f"- Focus: shallow DOF, smooth rack focus if applicable\n"
+            f"- Lighting: warm natural practical light, no hard artificial\n\n"
+            f"AUDIO CUE: [describe sound that opens this scene — ambient environment, product sound, breath]\n\n"
+            f"WHAT MUST NOT APPEAR: {negative_prompt}\n\n"
+            f"CINEMATIC REFERENCE: {cinematic_ref}\n\n"
+            f"Duration: {scene_dur}. Aspect ratio: {ar_ratio}."
+        )
 
         scene_blocks.append(f"""
 ---
 
-## 🎬 SCENE {i} / {scene_count}: [BERI NAMA SCENE INI] ({scene_dur})
+## 🎬 SCENE {i} / {scene_count}: {scene_name} ({scene_dur})
 
 **🎯 PERAN SCENE:** {scene_role}
 
@@ -493,31 +819,42 @@ if generate:
 {talent_label_line}
 > {image_ref_instruction}
 
+**🎥 LENS & CAMERA DIRECTION:**
+- **Lensa:** {focal_len} — {focal_note}
+- **Shot Grammar:** {cam_note}
+- **Color Grade:** {color_grade}
+- **Cinematic Ref:** {cinematic_ref}
+
 **👁️ DESKRIPSI VISUAL (untuk sutradara/storyboard artist):**
-[Tulis deskripsi sinematik detail: action talent, posisi produk, pencahayaan, komposisi frame. Setting wajib di {location_desc}. Talent wajib mengenakan {wardrobe_for_prompt}. Sinematografi gaya Arri Alexa, {format_video}.]
+[Deskripsikan momen sinematik secara frame-by-frame menggunakan lens {focal_len}: 
+bukan "talent duduk pegang produk" — tapi DETIK SPESIFIK yang ditangkap kamera: 
+micro-expression apa, gerakan tangan seberapa lambat, cahaya jatuh di sudut mana, 
+produk di titik mana dalam komposisi. 
+Setting wajib di {location_desc}. 
+Talent wajib mengenakan: {wardrobe_for_prompt}.]
 
 **📸 PROMPT GAMBAR — copy langsung ke Midjourney / Flux / Leonardo:**
 ```
-[SHOT TYPE: contoh Cinematic medium shot / extreme close-up / wide establishing shot], EXACT product appearance from Image 1 ({prod_name} — [AI: deskripsikan kemasan/warna/bentuk/label persis dari Image 1]), {talent_anchor} Setting: {location_desc}. [AKSI SPESIFIK SCENE INI — deskripsikan gerakan, ekspresi mikro, posisi produk]. [MOOD PENCAHAYAAN spesifik sesuai tone {tone_style}]. Shallow depth of field, warm bokeh, Arri Alexa color science, professional cinematography {ar_param} --v 6.0
+{prompt_gambar}
 ```
 
 **🎥 PROMPT VIDEO — copy langsung ke Kling AI / Runway / Hailuo:**
 ```
-{cam} {talent_anchor} Setting: {location_desc}. [AKSI SPESIFIK SCENE INI]. EXACT {prod_name} from Image 1 [posisi & cara pegang produk]. {tone_style} mood, warm natural lighting. Arri Alexa cinematic grade, shallow DOF, smooth {ar_param.replace('--ar ', '')} framing. Duration: {scene_dur}.
+{prompt_video}
 ```
 
 **🎙️ ELEMEN AUDIO:**
-- **VO Scene {i} ({lang_style}):** "[Kalimat VO yang menyambung dari scene sebelumnya — 1 narasi utuh yang dipotong per scene, BUKAN kalimat berdiri sendiri]"
-- **SFX:** [Sound effect spesifik & realistis untuk momen ini]
-- **Musik:** [Perkembangan musik dari scene sebelumnya — genre/instrumen/tempo harus KONSISTEN, hanya dinamika yang berubah]
+- **VO Scene {i} ({lang_style}):** "[Satu baris narasi puitis — BUKAN deskripsi produk, tapi PERASAAN MANUSIA. {VO_FORBIDDEN[:80]}...]"
+- **SFX:** [Suara spesifik & imersif — ambient environment + signature product sound scene ini]
+- **Musik:** [Dinamika dari scene sebelumnya — genre/instrumen/BPM KONSISTEN, intensitas emosi build-up]
 """)
 
     scene_template = "\n".join(scene_blocks)
 
     # -------------------------------------------------------
-    # MASTER PROMPT KE GEMINI
+    # MASTER PROMPT KE GEMINI — UPGRADED
     # -------------------------------------------------------
-    with st.spinner(f"📜 Menyusun {scene_count} scene mahakarya di {location_desc}..."):
+    with st.spinner(f"🎬 Meracik {scene_count} scene level iklan ratusan juta..."):
         try:
             image_parts = [Image.open(uploaded_file)]
             if uploaded_model:
@@ -526,12 +863,11 @@ if generate:
             model_gemini = genai.GenerativeModel('gemini-2.5-flash')
 
             master_prompt = f"""
-Anda adalah Sutradara TVC kelas dunia dan Chief Creative Officer yang telah mengerjakan iklan untuk brand-brand besar Asia Tenggara.
-Kali ini misi Anda adalah sesuatu yang lebih bermakna: mengangkat UMKM Indonesia '{prod_name}' ke layar dengan iklan {duration} yang terasa mahal, emosional, dan tak terlupakan.
+Anda adalah Sutradara TVC kelas dunia — Cannes Lions Grand Prix winner — yang telah membuat iklan untuk brand-brand besar Asia Tenggara dengan budget ratusan juta rupiah per produksi.
 
-Standar Anda adalah iklan TV yang membuat orang BERHENTI — bukan karena produknya, tapi karena PERASAAN yang ditimbulkan.
-Referensi jiwa: iklan Aqua yang bikin orang rindu perjalanan, iklan Indomie yang bikin rindu rumah, iklan Walls yang bikin senyum sendiri.
-Mereka tidak menjual produk. Mereka menjual momen manusia yang universal.
+Misi Anda hari ini bukan sekadar membuat iklan UMKM. Misi Anda adalah membuktikan bahwa UMKM '{prod_name}' layak tampil di layar TV nasional dengan kualitas yang sama persis seperti iklan Aqua, Indomie, Walls, atau Nescafé Asia — yang anggarannya jauh lebih besar.
+
+Anda bekerja dengan standar yang sama seperti ketika Anda membuat iklan untuk brand multinasional. Tidak ada kompromi pada kualitas cerita, kualitas visual, atau kualitas emosi.
 
 === CREATIVE BRIEF ===
 - PRODUK: {prod_name}
@@ -545,95 +881,101 @@ Mereka tidak menjual produk. Mereka menjual momen manusia yang universal.
 - CERITA & KEUNGGULAN PRODUK: {details}
 
 === REFERENSI VISUAL ===
-- Image 1 = Foto produk '{prod_name}' (product reference — warna, kemasan, label, tekstur HARUS dipertahankan identik)
-{"- Image 2 = Foto talent/model (character reference — wajah, kulit, rambut HARUS identik di semua scene)" if uploaded_model else f"- Tidak ada Image 2 — generate model: {talent_gender}, {talent_age}, {talent_ethnicity}"}
+- Image 1 = Foto produk '{prod_name}' → product reference — warna, kemasan, label, tekstur HARUS identik di semua scene
+{"- Image 2 = Foto talent → character reference untuk WAJAH & FISIK SAJA. Abaikan baju di foto — ikuti deskripsi wardrobe." if uploaded_model else f"- Tidak ada Image 2 → generate talent: {talent_gender}, {talent_age}, {talent_ethnicity}, konsisten lintas scene"}
 
-=== WARDROBE LOCK (NON-NEGOTIABLE) ===
-Model WAJIB mengenakan **{wardrobe_for_prompt}** di SETIAP scene tanpa pengecualian.
-Tulis deskripsi pakaian ini secara LENGKAP dan EKSPLISIT di setiap prompt gambar dan video.
-Jangan pernah tulis hanya "same wardrobe" — selalu tulis deskripsi lengkapnya.
+=== WARDROBE LOCK — NON-NEGOTIABLE ===
+Talent WAJIB mengenakan **{wardrobe_for_prompt}** di SETIAP scene.
+CRITICAL: {CLOTHING_OVERRIDE}
+Tulis deskripsi wardrobe ini LENGKAP dan EKSPLISIT di setiap prompt gambar dan video — JANGAN disingkat "same wardrobe".
 
-=== FILOSOFI IKLAN TV MAHAL — WAJIB DIPAHAMI SEBELUM MENULIS ===
+=== STANDAR IKLAN TV RATUSAN JUTA — WAJIB DIPAHAMI ===
 
-**1. JANGAN PERNAH SEBUT HARGA ATAU KATA "MURAH/MAHAL" DALAM VO**
-Iklan Indomie tidak pernah bilang "murah". Iklan Aqua tidak pernah bilang "terjangkau".
-VO yang menyebut harga = iklan pasar, bukan iklan TV. Harga adalah urusan toko, bukan urusan cerita.
+**PRINSIP 1: JUAL MOMEN MANUSIA, BUKAN PRODUK**
+Iklan Aqua tidak menjual air. Ia menjual rasa rindu perjalanan.
+Iklan Indomie tidak menjual mie. Ia menjual rasa pulang.
+Iklan Walls tidak menjual es krim. Ia menjual kebahagiaan sederhana yang tulus.
+Mereka tidak pernah MENDESKRIPSIKAN produk di VO. Mereka MENCIPTAKAN MOMEN.
+{prod_name} harus jadi kendaraan menuju perasaan universal — bukan objek yang dijual.
 
-**2. JUAL PERASAAN, BUKAN PRODUK**
-Produk adalah kendaraan. Perasaan adalah tujuannya.
-Tanyakan: momen manusia apa yang diwakili oleh {prod_name}? Kebersamaan? Istirahat sejenak? Menemukan kejutan kecil yang membahagiakan?
-Bangun cerita di sekitar perasaan itu. Produk hadir sebagai solusi yang natural, bukan dijual secara frontal.
+**PRINSIP 2: VO ADALAH PUISI, BUKAN INFORMASI**
+VO iklan mahal tidak menjelaskan produk. VO berbicara tentang kondisi manusia.
+{VO_FORBIDDEN}
+VO harus bisa dibacakan tanpa gambar dan masih terasa bermakna dan indah.
+VO yang bagus: "Ada yang bilang hal-hal kecil tidak penting. Mereka belum menemukan yang ini."
+VO yang buruk: "Keripik pisang ini renyah dan gurih, dibuat dari bahan pilihan."
 
-**3. SATU SIGNATURE MOMENT — SATU GAMBAR YANG ORANG INGAT SEUMUR HIDUP**
-Setiap iklan TV mahal punya 1 frame ikonik: kilau cahaya dari botol Coca-Cola, uap nasi dari Indomie, tawa anak kecil di iklan susu.
-Tentukan 1 SIGNATURE MOMENT visual untuk iklan ini — momen spesifik yang hanya bisa ada di {prod_name} — dan jadikan puncak visual iklan.
-Deskripsikan momen ini secara sinematik dengan sangat detail dalam storyboard.
+{VO_ANCHOR_EXAMPLES}
 
-**4. STRUKTUR EMOSI: TENSION → RELEASE → DESIRE**
-Ini bukan struktur "tanya-jawab-pegang produk". Ini struktur emosi:
-- TENSION: Ciptakan rasa yang relate — situasi, perasaan, atau momen yang penonton KENALI dari hidup mereka sendiri.
-- RELEASE: Produk hadir bukan sebagai solusi iklan, tapi sebagai momen kelegaan yang natural dan hangat.
-- DESIRE: Penonton tidak ingin MEMBELI produk — mereka ingin MERASAKAN momen itu. Pembelian adalah konsekuensi alamiah.
+**PRINSIP 3: SATU SIGNATURE MOMENT — SATU FRAME IKONIK**
+Setiap iklan TV mahal punya 1 frame yang penonton ingat seumur hidup.
+Tentukan 1 MOMEN SPESIFIK yang hanya bisa ada di {prod_name}.
+Bukan pose. Bukan komposisi. Tapi DETIK — micro-expression, gerakan tangan, cahaya yang jatuh tepat.
+Ini harus menjadi visual puncak iklan, dieksekusi dengan lensa makro atau 85mm.
 
-**5. VO ADALAH PUISI, BUKAN DESKRIPSI**
-VO iklan mahal tidak menjelaskan produk. VO berbicara tentang perasaan manusia.
-Hindari: "Keripik pisang ini renyah dan enak." (deskripsi)
-Gunakan: "Ada momen-momen kecil yang diam-diam jadi favorit." (puisi manusia)
-VO harus bisa dibacakan tanpa gambar dan tetap terasa bermakna.
-Gaya bahasa wajib mengikuti input: {lang_style}.
+**PRINSIP 4: STRUKTUR EMOSI — TENSION → RELEASE → DESIRE**
+- TENSION: Penonton MENGENALI situasi dari hidup mereka. Bukan konflik dramatis — tapi momen "butuh sesuatu" yang universal.
+- RELEASE: Produk hadir bukan sebagai solusi iklan. Ia hadir seperti teman lama yang muncul di saat yang tepat.
+- DESIRE: Penonton tidak ingin membeli produk. Mereka ingin BERADA di momen itu. Pembelian adalah efek samping.
 
-**6. SINEMATOGRAFI: DETAIL YANG BERBICARA**
-Iklan mahal tidak hanya "wide shot talent pegang produk". Mereka memperhatikan:
-- Cahaya yang jatuh di sudut yang tepat pada produk
-- Gerakan tangan yang lambat dan penuh makna
-- Ekspresi mikro wajah talent — bukan senyum besar, tapi senyum tipis yang jujur
-- Sound design yang imersif: suara lingkungan, detail SFX produk, musik yang bernapas
+**PRINSIP 5: SINEMATOGRAFI MENCERITAKAN EMOSI**
+Lensa bukan hanya alat teknis — ia adalah sudut pandang emosi.
+- 35mm: penonton melihat dunia — establishing, connection to environment
+- 85mm: penonton merasakan — compression, intimacy, the face as landscape
+- 100mm macro: penonton menyentuh — texture, the decisive micro-detail
+Shot grammar: setiap scene punya OPENING FRAME → MOVEMENT → BEAT (held) → CLOSING FRAME.
+Tidak ada shot yang "talent memegang produk menghadap kamera". Semua terjadi secara natural.
 
-=== 8 ATURAN KONSISTENSI TEKNIS (NON-NEGOTIABLE) ===
-1. KONSISTENSI LOKASI: Semua {scene_count} scene di '{location_desc}'. Variasi sudut kamera boleh, GANTI lokasi TIDAK BOLEH.
-2. KONSISTENSI WAJAH TALENT: Wajah model HARUS IDENTIK lintas semua scene. Tulis instruksi ini eksplisit di setiap prompt.
-3. KONSISTENSI WARDROBE: Pakaian model HARUS IDENTIK lintas semua scene. Tulis deskripsi LENGKAP pakaian di setiap prompt gambar dan video — jangan disingkat.
-4. KONSISTENSI PRODUK: Bentuk, warna, kemasan, label {prod_name} HARUS IDENTIK dengan Image 1. Jangan imajinasikan variasi.
-5. KONSISTENSI VO (NARASI UTUH): VO adalah SATU narasi puitis yang dipotong per scene. Kalimat mengalir dan bersambung — bukan kalimat berdiri sendiri. Tidak ada satu pun kalimat VO yang menyebut harga.
-6. KONSISTENSI MUSIK: Genre, instrumen utama, dan tempo SAMA dari scene 1 sampai {scene_count}. Dinamika boleh build-up, DNA musik tidak boleh berubah.
-7. PROMPT GAMBAR HARUS SPESIFIK: Setiap prompt gambar WAJIB menyebutkan: (a) jenis shot sinematik, (b) deskripsi fisik produk dari Image 1, (c) deskripsi lengkap wardrobe, (d) aksi & ekspresi spesifik scene, (e) kualitas pencahayaan & mood.
-8. PROMPT VIDEO HARUS EXECUTABLE: Prompt video harus langsung bisa dipakai di Kling/Runway. Sertakan: gerakan kamera spesifik, aksi talent frame-by-frame, posisi produk, durasi, sound cue, dan color grade reference.
+**PRINSIP 6: PROMPT GAMBAR = TANGKAP MOMEN, BUKAN DESKRIPSI POSISI**
+Prompt yang buruk: "Man sitting at cafe table holding product, warm light, smiling."
+Prompt yang benar: "The exact second his eyes close halfway — not a blink, an exhale — 
+as the taste registers. His shoulders have dropped 3mm from where they were.
+The product is a blur in his hand. His face is the story."
 
-=== FORMAT OUTPUT WAJIB (IKUTI PERSIS — JANGAN TAMBAH/KURANGI SECTION) ===
+=== ATURAN KONSISTENSI TEKNIS (NON-NEGOTIABLE) ===
+1. LOKASI: Semua {scene_count} scene di '{location_desc}'. Variasi angle boleh, ganti lokasi tidak.
+2. WAJAH TALENT: Identik di semua scene. Tulis instruksi ini eksplisit di setiap prompt.
+3. WARDROBE: Identik di semua scene. Tulis deskripsi LENGKAP di setiap prompt — tidak boleh disingkat.
+4. PRODUK: Bentuk, warna, kemasan, label {prod_name} IDENTIK dengan Image 1. Zero variasi.
+5. VO SATU NARASI UTUH: Dipotong per scene tapi mengalir sebagai satu puisi. Zero kata deskripsi fisik produk.
+6. MUSIK: DNA genre/instrumen sama dari scene 1 ke {scene_count}. Intensitas boleh naik, karakter tidak boleh berubah.
+7. PROMPT GAMBAR WAJIB BERISI: (a) emotional moment description, (b) shot grammar, (c) product detail dari Image 1, (d) full wardrobe dengan clothing override, (e) cinematic reference.
+8. PROMPT VIDEO WAJIB BERISI: (a) opening frame, (b) movement speed & direction, (c) beat timing, (d) closing frame, (e) talent + wardrobe + product description lengkap.
+
+=== FORMAT OUTPUT (IKUTI PERSIS) ===
 
 ## 🎯 BIG IDEA & TAGLINE
-- **Big Idea:** [1 kalimat — BUKAN deskripsi produk, tapi PERASAAN MANUSIA yang menjadi jiwa iklan ini. Contoh bukan: "Keripik pisang yang enak dan murah." Contoh ya: "Momen kecil yang diam-diam jadi bagian terbaik hari ini."]
-- **Tagline:** [Maks 7 kata. Poetic, memorable, tanpa kata harga. Harus bisa hidup sendiri tanpa konteks produk.]
-- **Signature Moment:** [Deskripsikan 1 frame ikonik dari iklan ini — momen visual spesifik yang hanya bisa ada di {prod_name} dan akan diingat penonton selamanya. Ini adalah puncak visual iklan.]
+- **Big Idea:** [1 kalimat — MOMEN MANUSIA, bukan deskripsi produk. "Momen kecil yang diam-diam jadi bagian terbaik hari ini" BUKAN "Keripik pisang yang enak dan berkualitas"]
+- **Tagline:** [Maks 7 kata. Puitis. Bisa hidup tanpa konteks produk. Zero kata harga/fisik produk.]
+- **Signature Moment:** [Deskripsikan 1 DETIK SPESIFIK — bukan pose, tapi micro-moment yang hanya bisa ada di {prod_name}. Sebutkan lensa, cahaya, ekspresi, gerakan. Ini puncak visual iklan.]
 
 ## 🔍 PRODUCTION PLAN
 
 ### Analisis Produk dari Image 1
-[Deskripsikan DETAIL fisik produk dari foto: warna, tekstur, kemasan, label, ukuran relatif, kondisi. Ini akan jadi anchor semua prompt.]
+[Detail fisik produk: warna, tekstur, kemasan, label, ukuran — anchor untuk semua prompt]
 
 ### Emotional Story Arc — {scene_count} Scene
-[Jelaskan arc emosi keseluruhan iklan: apa TENSION-nya, bagaimana RELEASE-nya, bagaimana DESIRE diciptakan. Ini bukan sinopsis scene, tapi blueprint emosi yang mengalir dari scene 1 ke {scene_count}.]
+[Blueprint emosi: apa TENSION-nya, bagaimana RELEASE-nya, bagaimana DESIRE terbentuk. Bukan sinopsis scene, tapi peta perasaan.]
 
 ### Location & Cinematography Blueprint
-[Bagaimana {location_desc} dieksekusi secara sinematik: sudut, pencahayaan, props yang digunakan, bagaimana Signature Moment dieksekusi secara visual]
+[Bagaimana {location_desc} dieksekusi: sudut, pencahayaan, props, bagaimana Signature Moment dieksekusi di sini]
 
 ### Master Character & Wardrobe Lock
-[Deskripsi LENGKAP talent dan wardrobe yang akan KONSISTEN di semua {scene_count} scene.]
-- **Wajah & Fisik:** [dari Image 2 atau deskripsi AI-generated]
-- **Pakaian Atas:** [detail spesifik — warna, bahan, potongan]
-- **Pakaian Bawah:** [detail spesifik]
-- **Aksesori:** [jika ada]
+- **Wajah & Fisik:** [dari Image 2 atau deskripsi AI-generated — detail sangat spesifik]
+- **Pakaian Atas:** [detail lengkap — warna, bahan, potongan, zero logo/text]
+- **Pakaian Bawah:** [detail lengkap]
+- **Aksesori:** [jika ada, atau "tidak ada"]
 - **Rambut & Grooming:** [spesifik]
-- **Ekspresi Khas:** [bagaimana ekspresi talent yang KONSISTEN — bukan senyum besar iklan, tapi nuansa emosi yang jujur]
+- **Ekspresi Khas:** [bukan "senyum lebar" — ekspresi jujur yang spesifik]
 
 ### Color Palette
-[5 warna dominan dengan hex code dan keterangan penggunaannya — harus mendukung tone {tone_style}]
+[5 warna dominan dengan hex code dan fungsinya — mendukung {tone_style}]
 
 ### 🎵 Audio & VO Master Plan
-- **Musik:** [Genre spesifik, instrumen utama, BPM, mood per scene, referensi artis/lagu jika ada]
-- **Sound Design:** [SFX khas produk yang menjadi identitas audio iklan ini — suara yang akan penonton ingat]
-- **VO Philosophy:** [Jelaskan pendekatan VO: bukan deskripsi produk, tapi narasi perasaan manusia. Gaya bahasa: {lang_style}]
-- **VO Full Script (1 narasi utuh):** [Tulis FULL VO dari awal sampai akhir sebagai 1 teks mengalir — tanpa menyebut harga, tanpa kata "murah/mahal/terjangkau". Pure puisi tentang momen manusia yang melibatkan {prod_name}.]
+- **Musik:** [genre, instrumen utama, BPM, arc dinamika per scene, referensi artis/komposer]
+- **Sound Design:** [signature sound produk ini — suara yang akan diingat penonton]
+- **VO Philosophy:** [narasi internal, puisi manusia, zero deskripsi fisik produk]
+- **VO Full Script (1 narasi utuh):** [Full VO dari awal sampai akhir sebagai 1 teks mengalir — ZERO kata deskripsi fisik produk. Murni puisi tentang momen manusia. Gaya bahasa: {lang_style}.]
 
 {scene_template}
 
@@ -642,20 +984,26 @@ Iklan mahal tidak hanya "wide shot talent pegang produk". Mereka memperhatikan:
 ## 📱 CAMPAIGN KIT
 
 ### Caption Instagram/TikTok
-[Caption dengan hook 2 baris pertama yang memaksa orang berhenti scroll. Body cerita emosional. Tutup dengan CTA '{cta_goal}'. Maks 150 kata. Gaya bahasa: {lang_style}. Hashtag TANPA SPASI.]
+[2 baris pertama = HOOK yang memaksa scroll stop. Body = cerita emosional. Tutup dengan CTA '{cta_goal}'. Maks 150 kata. Gaya: {lang_style}. Hashtag tanpa spasi.]
 
 ### Hashtag Strategy
-**Tier 1 — High Volume (5 hashtag):** [hashtag umum jutaan postingan — tanpa spasi]
-**Tier 2 — Mid Volume (5 hashtag):** [hashtag kategori ratusan ribu postingan — tanpa spasi]
-**Tier 3 — Niche/Branded (5 hashtag):** [hashtag unik produk + lokal Lampung/Indonesia — tanpa spasi]
+**Tier 1 — High Volume (5 hashtag):** [tanpa spasi]
+**Tier 2 — Mid Volume (5 hashtag):** [tanpa spasi]
+**Tier 3 — Niche/Branded (5 hashtag):** [tanpa spasi]
 
 ### 🎙️ Voice Over Script Final (Siap Rekam)
-[VO bersih per scene dengan timing. Siap dibaca talent tanpa arah visual. Format:]
+[VO bersih per scene dengan timing. Siap baca tanpa arah visual.]
 (0:00 - Scene 1) "..."
-[dst sesuai jumlah scene]
+[dst]
 
-### 💰 3 Tips Produksi Hemat UMKM
-[Tips eksekusi sinematik dengan budget minimal — spesifik, actionable, relevan dengan {location_desc} dan cara menangkap Signature Moment dengan smartphone]
+### 📋 Shot List Manual (Untuk Shooting Smartphone)
+[Tabel shot list yang bisa langsung dicetak untuk shooting sendiri:]
+| Shot | Durasi | Zoom/Lensa | Aksi Talent | Props | Catatan Sutradara |
+|------|--------|------------|-------------|-------|-------------------|
+[Isi untuk semua {scene_count} scene]
+
+### 💰 3 Tips Produksi Level Mahal dengan Budget UMKM
+[Tips spesifik & actionable — bagaimana menangkap Signature Moment dengan smartphone, audio trick, lighting hack]
 """
 
             res = model_gemini.generate_content([master_prompt] + image_parts)
@@ -673,35 +1021,29 @@ Iklan mahal tidak hanya "wide shot talent pegang produk". Mereka memperhatikan:
 if st.session_state.last_result:
     st.divider()
 
-    # ---- PARSING & DISPLAY DENGAN TOMBOL COPY ----
     result_text = st.session_state.last_result
     lines = result_text.split('\n')
 
-    # Render hasil dengan tombol copy untuk setiap blok kode prompt
     current_block = []
     in_code_block = False
-    code_lang = ""
     prompt_count = 0
 
     for line in lines:
         stripped = line.strip()
 
         if stripped.startswith("```") and not in_code_block:
-            # Flush accumulated non-code text
             if current_block:
                 st.markdown('\n'.join(current_block))
                 current_block = []
             in_code_block = True
-            code_lang = stripped[3:].strip()
 
         elif stripped == "```" and in_code_block:
-            # End of code block — render with copy button
             in_code_block = False
             prompt_count += 1
             prompt_text = '\n'.join(current_block)
             current_block = []
 
-            # Determine label
+            # Label prompt gambar vs video
             if prompt_count % 2 == 1:
                 label = "📸 Prompt Gambar"
                 label_color = "#d97706"
@@ -722,13 +1064,11 @@ if st.session_state.last_result:
         else:
             current_block.append(line)
 
-    # Flush any remaining text
     if current_block:
         st.markdown('\n'.join(current_block))
 
     st.divider()
 
-    # ---- DOWNLOAD & RESET ----
     dl1, dl2 = st.columns(2)
     with dl1:
         st.download_button(
